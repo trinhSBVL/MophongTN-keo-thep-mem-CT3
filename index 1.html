@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô Phỏng Thí Nghiệm Kéo Thép CT3 </title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #2563eb;
+            --danger: #dc2626;
+            --bg-light: #f8fafc;
+            --border: #cbd5e1;
+            --text-main: #0f172a;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e2e8f0;
+            margin: 0; padding: 15px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        h1 { color: var(--primary); margin: 0 0 5px 0; font-size: 24px; text-transform: uppercase; text-align: center; }
+        p.subtitle { color: #475569; margin: 0 0 15px 0; font-style: italic; font-size: 14px;}
+
+        /* Bố cục 16:9, chia 1/3 và 2/3 */
+        .layout-wrapper {
+            display: flex;
+            width: 100%; max-width: 1280px; /* Chiều rộng chuẩn HD */
+            aspect-ratio: 16 / 9; /* Tỷ lệ 16:9 cho màn hình hiện đại */
+            background: #fff; border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            overflow: hidden; border: 1px solid var(--border);
+        }
+
+        .panel-left {
+            flex: 1; /* Chiếm 1 phần (1/3) */
+            border-right: 2px solid var(--border);
+            background: var(--bg-light);
+            padding: 15px;
+            display: flex; flex-direction: column;
+        }
+
+        .panel-right {
+            flex: 2; /* Chiếm 2 phần (2/3) */
+            padding: 15px;
+            display: flex; flex-direction: column;
+        }
+
+        h2 { font-size: 15px; color: var(--primary); text-align: center; margin: 0 0 10px 0; border-bottom: 2px solid var(--secondary); padding-bottom: 8px; }
+
+        .canvas-container {
+            flex: 1; 
+            position: relative; 
+            width: 100%;
+        }
+
+        canvas { 
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #ffffff; 
+            border: 1px solid var(--border); border-radius: 6px; 
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+        }
+
+        /* Hộp thông tin CT3 (Bên trái) */
+        .ct3-info-box {
+            background: #ffffff;
+            border: 2px solid var(--secondary);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .ct3-header {
+            background: var(--secondary); color: #fff;
+            padding: 6px; text-align: center; font-weight: bold; font-size: 13px;
+        }
+        .ct3-body { padding: 10px; display: flex; gap: 10px;}
+        .input-group { flex: 1; font-size: 12px; font-weight: bold; color: var(--text-main); }
+        .input-group input {
+            width: 100%; padding: 5px; margin-top: 4px;
+            border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; color: var(--danger);
+            box-sizing: border-box;
+        }
+
+        /* Vùng điều khiển dưới cùng */
+        .control-area {
+            width: 100%; max-width: 1280px; background: #fff; padding: 20px;
+            margin-top: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            box-sizing: border-box; text-align: center;
+        }
+        input[type="range"] { width: 90%; height: 8px; border-radius: 4px; outline: none; cursor: pointer; accent-color: var(--secondary); }
+        
+        .dashboard {
+            display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;
+            background: #eff6ff; padding: 12px; border-radius: 8px;
+            font-size: 15px; font-weight: bold; border: 1px solid #bfdbfe; margin-top: 15px;
+        }
+        .dashboard span { min-width: 160px; color: var(--primary); }
+        .dashboard span.highlight { color: var(--danger); }
+        .dashboard span.safe { color: #15803d; }
+
+        .status-badge {
+            margin-top: 10px; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 14px; text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>MÔ PHỎNG THÍ NGHIỆM KÉO THÉP MỀM CT3</h1>
+    <p class="subtitle">ỨNG XỬ CỦA THÉP MỀM KHI CHỊU KÉO</p>
+
+    <div class="layout-wrapper">
+        <!-- BÊN TRÁI: 1/3 (Mẫu vật & Thông tin & Thước đo) -->
+        <div class="panel-left">
+            <h2>HÌNH ẢNH MẪU & THƯỚC ĐO</h2>
+            
+            <div class="ct3-info-box">
+                <div class="ct3-header">THÔNG TIN MẪU THỬ CT3</div>
+                <div class="ct3-body">
+                    <div class="input-group">
+                        Đường kính d₀ (mm):
+                        <input type="number" id="inpD0" min="9" max="11" step="0.05" value="10.00">
+                    </div>
+                    <div class="input-group">
+                        Chiều dài L₀ (mm):
+                        <input type="number" id="inpL0" min="100" max="120" step="0.1" value="100.0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="canvasSpecimen" width="400" height="550"></canvas>
+            </div>
+        </div>
+
+        <!-- BÊN PHẢI: 2/3 (Biểu đồ) -->
+        <div class="panel-right">
+            <h2>BIỂU ĐỒ LỰC KÉO (N) - BIẾN DẠNG (mm)</h2>
+            <div class="canvas-container">
+                <canvas id="canvasGraph" width="800" height="650"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHU VỰC ĐIỀU KHIỂN CHUNG -->
+    <div class="control-area">
+        <label style="font-weight:bold; font-size:16px; color:var(--text-main);">KÉO THANH TRƯỢT ĐỂ GIA TẢI (BIẾN DẠNG ΔL)</label><br><br>
+        <input type="range" id="sliderDL" min="0" max="30" value="0" step="0.01">
+        
+        <div class="dashboard">
+            <span>Độ giãn ΔL: <span id="valDL">0.00</span> mm</span>
+            <span class="highlight">Lực kéo P: <span id="valP">0</span> N</span>
+            <span class="safe">Biến dạng ε: <span id="valStrain">0.00</span> %</span>
+            <span class="safe">Ứng suất σ: <span id="valStress">0.00</span> MPa</span>
+        </div>
+        <div id="valStatus" class="status-badge" style="background:#f1f5f9; border: 1px solid #cbd5e1; color: #475569;">Trạng thái: Chưa gia tải</div>
+    </div>
+
+    <script>
+        // DOM
+        const inpD0 = document.getElementById('inpD0');
+        const inpL0 = document.getElementById('inpL0');
+        const sliderDL = document.getElementById('sliderDL');
+        
+        const ctxS = document.getElementById('canvasSpecimen').getContext('2d');
+        const canvasG = document.getElementById('canvasGraph');
+        const ctxG = canvasG.getContext('2d');
+
+        // Các biến giới hạn toàn cục
+        let kF = 1.0; // Tỷ lệ lực
+        let kL = 1.0; // Tỷ lệ biến dạng
+        let limit = {}; // Chứa các mốc sau quy đổi
+
+        // Tự động điều chỉnh độ phân giải nội bộ của canvas để nét vẽ không bị mờ
+        function resizeCanvases() {
+            ctxS.canvas.width = ctxS.canvas.clientWidth;
+            ctxS.canvas.height = ctxS.canvas.clientHeight;
+            ctxG.canvas.width = ctxG.canvas.clientWidth;
+            ctxG.canvas.height = ctxG.canvas.clientHeight;
+        }
+
+        // 1. TÍNH TOÁN QUY ĐỔI TỶ LỆ TỪ CƠ SỞ (d0=10, L0=100)
+        function updateScaling() {
+            let d0 = parseFloat(inpD0.value) || 10;
+            let L0 = parseFloat(inpL0.value) || 100;
+            
+            // Giới hạn an toàn
+            if (d0 < 9) d0 = 9; if (d0 > 11) d0 = 11;
+            if (L0 < 100) L0 = 100; if (L0 > 120) L0 = 120;
+
+            // Tính hệ số: Ứng suất không đổi -> P tỷ lệ với Diện tích (d^2).
+            kF = Math.pow(d0 / 10.0, 2);
+            // Biến dạng cực đại tỷ lệ với L0
+            kL = L0 / 100.0;
+
+            limit = {
+                L_elas: 0.16 * kL,
+                L_yield: 4.0 * kL,
+                L_hard: 20.0 * kL,
+                L_frac: 25.0 * kL,
+                
+                F_elas: 25000 * kF,
+                F_yield_base: 25600 * kF,
+                F_yield_amp: 300 * kF,
+                F_max: 38000 * kF,
+                F_frac: 26200 * kF
+            };
+
+            sliderDL.max = limit.L_frac + (2 * kL);
+        }
+
+        // 2. HÀM TOÁN HỌC: LỰC = F(BIẾN DẠNG)
+        function getForce(dL) {
+            if (dL <= 0) return 0;
+            if (dL <= limit.L_elas) return (limit.F_elas / limit.L_elas) * dL;
+            else if (dL <= limit.L_yield) {
+                let freq = (6 * 2 * Math.PI) / (limit.L_yield - limit.L_elas);
+                return limit.F_yield_base + limit.F_yield_amp * Math.sin(freq * (dL - limit.L_elas));
+            }
+            else if (dL <= limit.L_hard) {
+                let t = (dL - limit.L_yield) / (limit.L_hard - limit.L_yield);
+                return limit.F_yield_base + (limit.F_max - limit.F_yield_base) * Math.sin(t * Math.PI / 2);
+            }
+            else if (dL <= limit.L_frac) {
+                let t = (dL - limit.L_hard) / (limit.L_frac - limit.L_hard);
+                return limit.F_max - (limit.F_max - limit.F_frac) * (t * t);
+            }
+            return 0;
+        }
+
+        // 3. VẼ ĐỒ THỊ (BÊN PHẢI - 2/3)
+        function drawGraph(currDL) {
+            let W = ctxG.canvas.width;
+            let H = ctxG.canvas.height;
+            ctxG.clearRect(0, 0, W, H);
+
+            // Tọa độ hệ trục
+            const padL = 70, padB = 60, padT = 40, padR = 30;
+            const originX = padL;
+            const originY = H - padB;
+
+            const maxX = 30 * kL;
+            const maxY = 42000 * kF; 
+
+            const sX = (W - padL - padR) / maxX;
+            const sY = (H - padT - padB) / maxY;
+
+            // Lưới tọa độ
+            ctxG.strokeStyle = "#e2e8f0"; ctxG.lineWidth = 1; ctxG.font = "12px Arial"; ctxG.fillStyle = "#64748b";
+            for (let i = 0; i <= Math.ceil(maxX); i += 5) {
+                let px = originX + i * sX;
+                ctxG.beginPath(); ctxG.moveTo(px, originY); ctxG.lineTo(px, padT); ctxG.stroke();
+                ctxG.fillText(i, px - 4, originY + 20);
+            }
+            for (let i = 0; i <= maxY; i += 5000) {
+                let py = originY - i * sY;
+                ctxG.beginPath(); ctxG.moveTo(originX, py); ctxG.lineTo(W - padR, py); ctxG.stroke();
+                ctxG.fillText(i, originX - 45, py + 4);
+            }
+
+            // Trục chính
+            ctxG.strokeStyle = "#0f172a"; ctxG.lineWidth = 2;
+            ctxG.beginPath(); 
+            ctxG.moveTo(originX, padT - 10); ctxG.lineTo(originX, originY);
+            ctxG.lineTo(W - padR + 10, originY);
+            ctxG.stroke();
+
+            // Label Trục
+            ctxG.font = "bold 14px Arial"; ctxG.fillStyle = "#1e3a8a";
+            ctxG.fillText("Biến dạng ΔL (mm)", W - padR - 100, originY - 10);
+            ctxG.save(); ctxG.translate(originX - 55, padT + 100); ctxG.rotate(-Math.PI/2);
+            ctxG.fillText("Lực kéo P (N)", 0, 0); ctxG.restore();
+
+            // Vẽ đường đồ thị
+            if (currDL > 0) {
+                let drawLimit = Math.min(currDL, limit.L_frac);
+                ctxG.beginPath();
+                ctxG.moveTo(originX, originY);
+
+                let step = 0.05; 
+                for (let x = 0; x <= drawLimit; x += step) {
+                    let y = getForce(x);
+                    let px = originX + x * sX;
+                    let py = originY - y * sY;
+
+                    if (x <= limit.L_elas) ctxG.strokeStyle = "#16a34a";
+                    else if (x <= limit.L_yield) ctxG.strokeStyle = "#d97706";
+                    else if (x <= limit.L_hard) ctxG.strokeStyle = "#ea580c";
+                    else ctxG.strokeStyle = "#dc2626";
+
+                    ctxG.lineTo(px, py);
+                    ctxG.stroke();
+                    ctxG.beginPath(); ctxG.moveTo(px, py);
+                }
+
+                // Vẽ điểm hiện tại
+                if (currDL <= limit.L_frac) {
+                    let currP = getForce(currDL);
+                    let px = originX + currDL * sX;
+                    let py = originY - currP * sY;
+                    ctxG.beginPath(); ctxG.arc(px, py, 6, 0, 2*Math.PI);
+                    ctxG.fillStyle = "#dc2626"; ctxG.fill();
+                    ctxG.strokeStyle = "#fff"; ctxG.lineWidth = 2; ctxG.stroke();
+                } else {
+                    let px = originX + limit.L_frac * sX;
+                    let py = originY - limit.F_frac * sY;
+                    ctxG.fillStyle = "#dc2626"; ctxG.font = "bold 18px Arial";
+                    ctxG.fillText("✖ ĐỨT", px + 10, py - 10);
+                }
+            }
+        }
+
+        // 4. VẼ MẪU, LỰC P & THƯỚC ĐO (BÊN TRÁI - 1/3)
+        function drawSpecimen(dL, force) {
+            let W = ctxS.canvas.width;
+            let H = ctxS.canvas.height;
+            ctxS.clearRect(0, 0, W, H);
+
+            let d0 = parseFloat(inpD0.value) || 10;
+            let L0 = parseFloat(inpL0.value) || 100;
+
+            // Visual scaling
+            const cX = W / 2 - 20; // Dịch mẫu sang trái một chút để chừa chỗ cho thước đo bên phải
+            const visScale = 2.5;  // Hệ số nhân để ảnh to và rõ
+            const visD = d0 * 5; 
+            const visL0 = L0 * visScale; 
+            const visDL = dL * visScale; 
+
+            const topY = 100; // Ngàm kẹp trên
+            const botY = topY + visL0 + visDL; // Ngàm kẹp dưới di chuyển
+            const gripW = 90, gripH = 25;
+
+            // --- VẼ THƯỚC ĐO BÊN CẠNH ---
+            const rulerX = cX + 80;
+            const maxMeasure = 150; // mm
+            
+            // Đường trục dọc của thước
+            ctxS.strokeStyle = "#64748b"; ctxS.lineWidth = 1;
+            ctxS.beginPath(); ctxS.moveTo(rulerX, topY); ctxS.lineTo(rulerX, topY + maxMeasure * visScale); ctxS.stroke();
+
+            // Vạch chia
+            ctxS.fillStyle = "#475569"; ctxS.font = "10px Arial";
+            for(let i = 0; i <= maxMeasure; i += 5) {
+                let yTick = topY + i * visScale;
+                ctxS.beginPath(); ctxS.moveTo(rulerX, yTick);
+                if (i % 10 === 0) {
+                    ctxS.lineTo(rulerX + 12, yTick);
+                    ctxS.fillText(i, rulerX + 16, yTick + 3);
+                } else {
+                    ctxS.lineTo(rulerX + 6, yTick);
+                }
+                ctxS.stroke();
+            }
+
+            // Kim chỉ thị trên thước đo
+            ctxS.beginPath(); ctxS.moveTo(cX + visD/2 + 5, botY); ctxS.lineTo(rulerX, botY);
+            ctxS.strokeStyle = "#dc2626"; ctxS.lineWidth = 1.5; ctxS.setLineDash([4, 4]); ctxS.stroke();
+            ctxS.setLineDash([]);
+            
+            // Đầu mũi tên chỉ vào thước
+            ctxS.beginPath(); ctxS.moveTo(rulerX, botY);
+            ctxS.lineTo(rulerX - 6, botY - 5); ctxS.lineTo(rulerX - 6, botY + 5);
+            ctxS.fillStyle = "#dc2626"; ctxS.fill();
+            
+            // Giá trị biến dạng ngay trên thước
+            ctxS.fillStyle = "#dc2626"; ctxS.font = "bold 13px Arial";
+            ctxS.fillText(`ΔL = ${dL.toFixed(2)} mm`, rulerX + 40, botY + 4);
+
+            // --- VẼ MŨI TÊN LỰC P & Ô CHỈ THỊ ---
+            const drawP = (yPos, isTop) => {
+                if (force <= 0) return;
+                let sign = isTop ? -1 : 1;
+                let arrowLen = 30 + (force / limit.F_max) * 40; 
+                
+                // Mũi tên
+                ctxS.beginPath(); ctxS.moveTo(cX, yPos); ctxS.lineTo(cX, yPos + arrowLen*sign);
+                ctxS.strokeStyle = "#dc2626"; ctxS.lineWidth = 2 + (force/20000); ctxS.stroke();
+                
+                // Đầu mũi tên
+                ctxS.beginPath(); ctxS.moveTo(cX, yPos + arrowLen*sign);
+                ctxS.lineTo(cX - 6, yPos + (arrowLen - 10)*sign); ctxS.lineTo(cX + 6, yPos + (arrowLen - 10)*sign);
+                ctxS.fillStyle = "#dc2626"; ctxS.fill();
+
+                // Chữ P
+                ctxS.fillStyle = "#991b1b"; ctxS.font = "bold 16px Arial";
+                ctxS.fillText("P", cX - 22, yPos + (arrowLen/2)*sign + 5);
+
+                // Ô chỉ thị Lực kế (Bên trái mẫu)
+                let boxX = cX - 110;
+                let boxY = yPos + (arrowLen/2)*sign - 12;
+                ctxS.fillStyle = "#fee2e2"; ctxS.strokeStyle = "#ef4444"; ctxS.lineWidth = 1;
+                ctxS.beginPath(); ctxS.roundRect(boxX, boxY, 80, 24, 4); ctxS.fill(); ctxS.stroke();
+                ctxS.fillStyle = "#b91c1c"; ctxS.font = "bold 11px Arial";
+                ctxS.fillText(`${Math.round(force)} N`, boxX + 8, boxY + 16);
+            };
+
+            // Vẽ Lực 2 đầu
+            if (dL <= limit.L_frac) {
+                drawP(topY - gripH, true);  
+                drawP(botY + gripH, false); 
+            }
+
+            // --- VẼ NGÀM KẸP ---
+            ctxS.fillStyle = "#334155";
+            ctxS.fillRect(cX - gripW/2, topY - gripH, gripW, gripH); 
+            ctxS.fillRect(cX - gripW/2, botY, gripW, gripH); 
+
+            // --- VẼ THÂN THÉP CT3 ---
+            let neck = 0;
+            if (dL > limit.L_hard && dL <= limit.L_frac) {
+                neck = (dL - limit.L_hard) * 1.5; 
+            } else if (dL > limit.L_frac) {
+                neck = (limit.L_frac - limit.L_hard) * 1.5; 
+            }
+
+            ctxS.fillStyle = "#cbd5e1"; ctxS.strokeStyle = "#0f172a"; ctxS.lineWidth = 1.5;
+            let currentVisL = visL0 + visDL;
+
+            if (dL <= limit.L_frac) {
+                // Liền mạch
+                ctxS.beginPath();
+                ctxS.moveTo(cX - visD/2, topY);
+                ctxS.quadraticCurveTo(cX - visD/2 + neck, topY + currentVisL/2, cX - visD/2, botY);
+                ctxS.lineTo(cX + visD/2, botY);
+                ctxS.quadraticCurveTo(cX + visD/2 - neck, topY + currentVisL/2, cX + visD/2, topY);
+                ctxS.closePath(); ctxS.fill(); ctxS.stroke();
+            } else {
+                // Đứt làm 2
+                let gap = 15;
+                ctxS.beginPath(); ctxS.moveTo(cX - visD/2, topY);
+                ctxS.quadraticCurveTo(cX - visD/2 + neck, topY + currentVisL/2 - gap, cX, topY + currentVisL/2 - gap + 8);
+                ctxS.quadraticCurveTo(cX + visD/2 - neck, topY + currentVisL/2 - gap, cX + visD/2, topY);
+                ctxS.fill(); ctxS.stroke();
+                
+                ctxS.beginPath(); ctxS.moveTo(cX - visD/2, botY);
+                ctxS.quadraticCurveTo(cX - visD/2 + neck, topY + currentVisL/2 + gap, cX, topY + currentVisL/2 + gap - 8);
+                ctxS.quadraticCurveTo(cX + visD/2 - neck, topY + currentVisL/2 + gap, cX + visD/2, botY);
+                ctxS.fill(); ctxS.stroke();
+            }
+        }
+
+        // 5. QUẢN LÝ LUỒNG DỮ LIỆU
+        function runSimulation() {
+            resizeCanvases(); // Đảm bảo canvas luôn sắc nét trên mọi độ phân giải
+            updateScaling();
+            
+            let dL = parseFloat(sliderDL.value);
+            let force = getForce(dL);
+            
+            let d0 = parseFloat(inpD0.value) || 10;
+            let L0 = parseFloat(inpL0.value) || 100;
+            
+            let area = (Math.PI * Math.pow(d0, 2)) / 4.0;
+            let stress = force / area;
+            let strain = (dL / L0) * 100;
+
+            // Cập nhật text UI
+            document.getElementById('valDL').innerText = dL.toFixed(2);
+            document.getElementById('valStrain').innerText = strain.toFixed(2);
+            
+            let stBox = document.getElementById('valStatus');
+
+            if (dL > limit.L_frac) {
+                document.getElementById('valP').innerText = "0";
+                document.getElementById('valStress').innerText = "0.00";
+                stBox.innerText = "TRẠNG THÁI: PHÁ HỦY (MẪU ĐÃ ĐỨT)";
+                stBox.style.background = "#fef2f2"; stBox.style.color = "#b91c1c"; stBox.style.borderColor = "#fecaca";
+            } else {
+                document.getElementById('valP').innerText = Math.round(force);
+                document.getElementById('valStress').innerText = stress.toFixed(2);
+                
+                if (dL <= limit.L_elas) {
+                    stBox.innerText = `Miền Đàn hồi (Tỷ lệ bậc nhất, E const)`;
+                    stBox.style.background = "#dcfce7"; stBox.style.color = "#15803d"; stBox.style.borderColor = "#bbf7d0";
+                } else if (dL <= limit.L_yield) {
+                    stBox.innerText = `Miền Chảy Dẻo (Lực dao động quanh ${Math.round(limit.F_yield_base)}N)`;
+                    stBox.style.background = "#fef3c7"; stBox.style.color = "#b45309"; stBox.style.borderColor = "#fde68a";
+                } else if (dL <= limit.L_hard) {
+                    stBox.innerText = `Miền Củng Cố (Biến cứng tới cực đại ${Math.round(limit.F_max)}N)`;
+                    stBox.style.background = "#ffedd5"; stBox.style.color = "#c2410c"; stBox.style.borderColor = "#fed7aa";
+                } else {
+                    stBox.innerText = `Miền Thắt Eo (Tiết diện giảm, Lực giảm)`;
+                    stBox.style.background = "#fee2e2"; stBox.style.color = "#b91c1c"; stBox.style.borderColor = "#fecaca";
+                }
+            }
+
+            drawGraph(dL);
+            drawSpecimen(dL, force);
+        }
+
+        // Lắng nghe sự kiện
+        window.addEventListener('resize', runSimulation); // Khi đổi kích thước cửa sổ thì vẽ lại
+        sliderDL.addEventListener('input', runSimulation);
+        inpD0.addEventListener('input', () => { 
+            updateScaling(); 
+            if(parseFloat(sliderDL.value) > parseFloat(sliderDL.max)) sliderDL.value = sliderDL.max; 
+            runSimulation(); 
+        });
+        inpL0.addEventListener('input', () => { 
+            updateScaling(); 
+            if(parseFloat(sliderDL.value) > parseFloat(sliderDL.max)) sliderDL.value = sliderDL.max; 
+            runSimulation(); 
+        });
+
+        // Khởi động
+        window.onload = runSimulation;
+
+    </script>
+</body>
+</html>
