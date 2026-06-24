@@ -22,7 +22,7 @@
         .input-group { margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 500; text-shadow: 0px 1px 2px rgba(255,255,255,0.8); }
         .input-group input { width: 70px; padding: 2px 5px; border: 1px solid #94a3b8; border-radius: 4px; text-align: right; background: rgba(255,255,255,0.9); text-shadow: none; }
         
-        canvas { display: block; width: 100%; height: 100%; }
+        canvas { display: block; width: 90%; height: 90%; }
         
         .btn { padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; text-align: center; transition: all 0.2s; border: none; color: white;}
         .btn-start { background-color: #2563eb; }
@@ -122,7 +122,7 @@
         scaleF: 1,    
         scaleL: 1,
         breakRatio: 0.5,
-        yAxisMax: 40000 // Thêm state cho trục tung động, mặc định 40000
+        yAxisMax: 40000 
     };
 
     const CONSTANTS = {
@@ -548,11 +548,23 @@
 
         if (state.xBase > 0) {
             ctxG.lineWidth = 3;
+            
+            // Lấy danh sách điểm cần vẽ: Từ 0 nhảy mỗi step, và kết thúc chính xác tại tọa độ state.xBase hiện tại
+            let step = 0.04;
+            let points = [];
+            for (let xB = 0; xB <= state.xBase; xB += step) {
+                points.push(xB);
+            }
+            // Đảm bảo nét nối liền mạch chính xác tới chấm đỏ (tránh độ trễ khi vận tốc nhỏ)
+            if (points.length === 0 || points[points.length - 1] < state.xBase) {
+                points.push(state.xBase);
+            }
+
             ctxG.beginPath();
             ctxG.moveTo(mapX(0), mapY(0));
             
-            let step = 0.04;
-            for(let xB = 0; xB <= state.xBase; xB += step) {
+            for (let i = 1; i < points.length; i++) {
+                let xB = points[i];
                 let pB = getPBase(xB);
                 let realX = xB * state.scaleL;
                 let realY = pB * state.scaleF;
@@ -564,11 +576,15 @@
 
                 ctxG.lineTo(mapX(realX), mapY(realY));
                 ctxG.stroke();
-                ctxG.beginPath(); 
-                ctxG.moveTo(mapX(realX), mapY(realY));
+                
+                // Mở path mới nối từ tọa độ vừa vẽ cho đoạn tiếp theo (nếu có)
+                if (i < points.length - 1) {
+                    ctxG.beginPath(); 
+                    ctxG.moveTo(mapX(realX), mapY(realY));
+                }
             }
-            ctxG.stroke();
             
+            // Vẽ điểm đỏ tại tọa độ chính xác hiện tại
             if (state.xBase < CONSTANTS.MAX_X_BASE) {
                 ctxG.fillStyle = '#ef4444';
                 ctxG.beginPath(); ctxG.arc(mapX(currX), mapY(currY), 5, 0, Math.PI*2); ctxG.fill();
@@ -651,7 +667,18 @@
     function animate() {
         if (!state.isRunning) return;
 
-        let dx_per_frame = (state.forceSpeed / 150000); 
+        let dx_per_frame;
+        
+        // Phân rã tốc độ theo từng giai đoạn
+        if (state.xBase <= 0.46) {
+            // Giai đoạn đàn hồi: Vẽ chậm lại (khoảng 10s cho tốc độ 1000 N/s)
+            // 10s * 60fps = 600 frames. Quãng đường 0.46 -> dx = 0.46 / 600 = 0.000766
+            dx_per_frame = (state.forceSpeed / 1000) * 0.000766; 
+        } else {
+            // Giai đoạn sau: Giữ nguyên quy luật vẽ cũ
+            dx_per_frame = (state.forceSpeed / 150000); 
+        }
+
         state.xBase += dx_per_frame;
 
         if (state.xBase >= CONSTANTS.MAX_X_BASE) {
