@@ -387,6 +387,41 @@
             ctxS.fillStyle = '#dc2626';
             ctxS.fillText(`d_ph = ${dph_val.toFixed(2)} mm`, textXLeft, yNeckLabel);
             drawLeaderLine(ctxS, textXLeft, yNeckLabel, centerX - neckWidth/2, yNeckLabel, '#dc2626', true);
+            
+            // --- THÊM VẼ GÓC ĐỨT GÃY 45 ĐỘ ---
+            const offset45 = neckWidth / 2;
+            const arcCenterX = centerX + neckWidth/2; 
+            const arcCenterY = neckY + 9; // gap/2 = 9
+
+            // Vẽ đường chuẩn nằm ngang
+            ctxS.beginPath();
+            ctxS.moveTo(arcCenterX, arcCenterY);
+            ctxS.lineTo(arcCenterX - 35, arcCenterY);
+            ctxS.strokeStyle = '#9333ea'; // Màu tím phân biệt rõ ràng
+            ctxS.lineWidth = 1.2;
+            ctxS.stroke();
+
+            // Vẽ đường kéo dài dọc theo mặt cắt để rõ góc độ hơn
+            const angleRad = Math.atan2(offset45, -neckWidth); // Góc nghiêng của mặt nứt dẻo
+            ctxS.beginPath();
+            ctxS.moveTo(arcCenterX, arcCenterY);
+            ctxS.lineTo(arcCenterX + 35 * Math.cos(angleRad), arcCenterY + 35 * Math.sin(angleRad));
+            ctxS.setLineDash([3, 3]);
+            ctxS.stroke();
+            ctxS.setLineDash([]);
+
+            // Vẽ cung tròn góc
+            const startA = Math.PI; 
+            const endA = angleRad; 
+            ctxS.beginPath();
+            ctxS.arc(arcCenterX, arcCenterY, 18, startA, endA, true); // true: ngược chiều kim đồng hồ
+            ctxS.stroke();
+
+            // Ghi chữ text "45°"
+            ctxS.fillStyle = '#9333ea';
+            ctxS.font = "bold 12px Arial";
+            ctxS.textAlign = "center";
+            ctxS.fillText("45°", arcCenterX - 28, arcCenterY + 18);
         }
 
         if (currentP > 0 && !isBroken) {
