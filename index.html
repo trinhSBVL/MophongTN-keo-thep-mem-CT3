@@ -5,36 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mô Phỏng Thí Nghiệm Kéo Thép CT3</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .app-container { width: 100%; max-width: 1600px; aspect-ratio: 16 / 8; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; flex-direction: column; position: relative; overflow: hidden; border-radius: 8px; border: 1px solid #e5e7eb; }
+        html { scroll-behavior: smooth; }
         
-        .header-title { background: #1e3a8a; color: white; text-align: center; padding: 12px 0; font-size: 1.5rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 20; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #0f172a; 
+            margin: 0; padding: 0; 
+            overflow-x: hidden; 
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        .page {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            padding: 2vh 2vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .app-container { 
+            width: 100%; max-width: 1600px; 
+            height: 100%; max-height: 900px; 
+            background: white; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            display: flex; flex-direction: column; 
+            position: relative; overflow: hidden; 
+            border-radius: 8px; border: 1px solid #334155; 
+        }
+        
+        .header-title { background: #1e3a8a; color: white; text-align: center; padding: 12px 0; font-size: 1.5rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 20; position: relative; }
         
         .main-content { display: flex; flex-direction: row; flex-grow: 1; height: 0; }
-        .left-panel { width: 33.33%; position: relative; background: #eef2f6; border-right: 2px solid #cbd5e1; display: flex; flex-direction: column; }
-        .right-panel { width: 66.67%; position: relative; background: #ffffff; display: flex; flex-direction: row;}
-        .graph-container { flex-grow: 1; position: relative; padding: 10px; display: flex; }
-        .control-panel { width: 190px; background: #f8fafc; border-left: 1px solid #e2e8f0; padding: 15px; display: flex; flex-direction: column; gap: 12px; z-index: 10; }
+        .left-panel { width: 33.33%; position: relative; background: #1e293b; border-right: 2px solid #334155; display: flex; flex-direction: column; overflow: hidden; }
         
-        .info-box { position: absolute; top: 10px; left: 10px; background: rgba(255,255,255,0.15); backdrop-filter: blur(1px); padding: 10px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid rgba(203,213,225,0.3); z-index: 10; width: calc(100% - 20px); }
-        .info-box h3 { text-shadow: 0px 1px 2px rgba(255,255,255,0.8); }
-        .input-group { margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 500; text-shadow: 0px 1px 2px rgba(255,255,255,0.8); }
-        .input-group input { width: 85px; padding: 2px 5px; border: 1px solid #94a3b8; border-radius: 4px; text-align: right; background: rgba(255,255,255,0.9); text-shadow: none; font-size: 13px; }
-        .input-group input:read-only { background: #e2e8f0; color: #475569; }
+        .right-panel { width: 66.67%; position: relative; background: #ffffff; display: flex; flex-direction: column;}
+        .graph-container { flex-grow: 1; position: relative; padding: 10px 10px 0 10px; display: flex; overflow: hidden; }
+        
+        #canvas3DContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; cursor: grab; }
+        #canvas3DContainer:active { cursor: grabbing; }
+        #canvasSpecimen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
         
         canvas { display: block; width: 100%; height: 100%; }
         
         .btn { padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; text-align: center; transition: all 0.2s; border: none; color: white;}
-        .btn-start { background-color: #2563eb; }
-        .btn-start:hover { background-color: #1d4ed8; }
-        .btn-pause { background-color: #f59e0b; }
-        .btn-pause:hover { background-color: #d97706; }
-        .btn-reset { background-color: #ef4444; }
-        .btn-reset:hover { background-color: #dc2626; }
-        .btn:disabled { background-color: #94a3b8; cursor: not-allowed; opacity: 0.7; }
+        .btn:disabled { background-color: #94a3b8 !important; cursor: not-allowed; opacity: 0.5; }
 
-        .annotations-overlay { position: absolute; right: 20px; bottom: 75px; display: flex; flex-direction: column-reverse; gap: 10px; pointer-events: none; z-index: 15; }
+        .annotations-overlay { position: absolute; right: 20px; bottom: 30px; display: flex; flex-direction: column-reverse; gap: 10px; pointer-events: none; z-index: 15; }
         .annotation { background: rgba(255, 255, 255, 0.95); border: 2px solid; padding: 8px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 175px; line-height: 1.3; opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .annotation.show { opacity: 1; transform: translateY(0); }
         .annotation::after { content: ''; position: absolute; top: 50%; left: -10px; transform: translateY(-50%); border-width: 5px; border-style: solid; }
@@ -43,86 +69,619 @@
         .anno-orange { color: #d97706; border-color: #d97706; } .anno-orange::after { border-color: transparent #d97706 transparent transparent; }
         .anno-green { color: #16a34a; border-color: #16a34a; } .anno-green::after { border-color: transparent #16a34a transparent transparent; }
         .anno-red { color: #dc2626; border-color: #dc2626; } .anno-red::after { border-color: transparent #dc2626 transparent transparent; }
+
+        @keyframes bounceDown {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        .scroll-down-btn {
+            position: absolute; bottom: 12px; right: 12px;
+            animation: bounceDown 2s infinite; z-index: 100; cursor: pointer;
+            background: rgba(15, 23, 42, 0.85); color: white; padding: 8px 20px;
+            border-radius: 30px; border: 1px solid #3b82f6; text-transform: uppercase;
+            font-weight: bold; font-size: 0.75rem; backdrop-filter: blur(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); text-decoration: none; 
+            display: flex; gap: 8px; align-items: center; transition: background 0.3s;
+        }
+        .scroll-down-btn:hover { background: #3b82f6; color: #fff; }
+
+        .page-2-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            grid-template-rows: 1fr 1fr; 
+            gap: 15px; 
+            width: 100%; max-width: 1600px; 
+            height: 100%; max-height: 900px; 
+        }
+        .quadrant { 
+            background: #1e293b; 
+            border: 1px solid #334155; 
+            border-radius: 10px; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4); 
+            padding: 12px; 
+            display: flex; 
+            flex-direction: column; 
+            color: #cbd5e1;
+            overflow: hidden;
+        }
+
+        .prose p { margin-bottom: 0.75em; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 0.75em; }
+        .prose li { margin-bottom: 0.25em; }
+        .prose strong { color: #3730a3; }
+
+        .fraction { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; vertical-align: middle; margin: 0 4px; }
+        .frac-top { border-bottom: 1px solid #94a3b8; padding: 0 4px; }
+        .frac-bot { padding: 0 4px; }
+        
+        .data-input { 
+            width: 65px; padding: 2px 4px; border: 1px solid #475569; border-radius: 4px; 
+            text-align: center; background: #334155; color: #94a3b8; font-family: monospace; 
+            font-weight: bold; transition: all 0.3s; outline: none;
+        }
+        .data-input:not(:disabled) { 
+            background: #f8fafc; color: #0f172a; border-color: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.6); 
+        }
+        .data-input.correct { background: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .data-input.incorrect { background: #fee2e2 !important; border-color: #ef4444 !important; color: #b91c1c !important; }
+
+        .calc-input { background-color: #334155; border: 1px solid #475569; color: #94a3b8; border-radius: 4px; padding: 1px 4px; font-family: monospace; text-align: center; transition: all 0.3s; }
+        .calc-input:not(:disabled) { background-color: #f8fafc; color: #0f172a; border-color: #3b82f6; box-shadow: 0 0 5px rgba(59,130,246,0.5); }
+        .calc-input.correct { background: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; box-shadow: 0 0 8px rgba(34,197,94,0.3) !important; }
+        .calc-input.incorrect { background: #fee2e2 !important; border-color: #ef4444 !important; color: #b91c1c !important; }
+
+        @media print {
+            body { background: white !important; overflow: visible !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .page { height: 100vh !important; padding: 0 !important; display: flex !important; position: relative !important; page-break-after: always !important; }
+            #page-2 { height: auto !important; padding-top: 0 !important; display: block !important; page-break-after: auto !important; }
+            .scroll-down-btn, .print-hide { display: none !important; } 
+            .app-container { height: 95vh !important; max-height: none !important; box-shadow: none !important; border: 1px solid #cbd5e1 !important; page-break-inside: avoid; }
+            .main-content { height: 600px !important; }
+            .page-2-grid { display: block !important; margin-top: 0 !important; max-height: none !important; height: auto !important; gap: 10px !important;}
+            .quadrant { background: white !important; border: 1px solid #cbd5e1 !important; box-shadow: none !important; margin-bottom: 15px !important; color: black !important; page-break-inside: avoid; padding: 10px !important; }
+            .quadrant h2 { color: black !important; border-bottom-color: #cbd5e1 !important; }
+            .bg-slate-800, .bg-slate-900\/50, .bg-slate-800\/80 { background: white !important; border-color: #cbd5e1 !important;}
+            input[type="text"], input[type="number"] { color: black !important; border-bottom-color: black !important; background: transparent !important; box-shadow: none !important;}
+            .text-slate-300, .text-white, .text-blue-400, .text-amber-400, .text-emerald-400, .text-rose-400, .text-blue-300, .text-amber-300, .text-rose-300, .text-rose-500 { color: black !important; }
+            .border-slate-600, .border-slate-700 { border-color: #cbd5e1 !important; }
+            .calc-input, .data-input { background: transparent !important; border: none !important; border-bottom: 1px dotted black !important; color: black !important; box-shadow: none !important; }
+            .frac-top { border-bottom-color: black !important; }
+        }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div class="header-title">Mô phỏng thí nghiệm kéo thép mềm CT3</div>
+<div class="page" id="page-1">
+    <div class="app-container">
+        <div class="header-title">
+            <!-- LOGO TRƯỜNG -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" style="position: absolute; top: 50%; left: 15px; transform: translateY(-50%); z-index: 20; height: 50px; width: 50px;">
+                <circle cx="100" cy="100" r="100" fill="#FDD835" />
+                <circle cx="100" cy="100" r="95" fill="#1A237E" />
+                <circle cx="100" cy="100" r="92" fill="#FFF9C4" />
+                <circle cx="100" cy="100" r="68" fill="#1A237E" />
+                <circle cx="100" cy="100" r="66" fill="#FDD835" />
+                <circle cx="100" cy="100" r="60" fill="#1A237E" />
+                <defs>
+                    <path id="top-arc" d="M 19,100 A 81,81 0 0,1 181,100" />
+                    <path id="bot-arc" d="M 181,100 A 81,81 0 0,1 19,100" />
+                </defs>
+                <text fill="#1A237E" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="10.8" letter-spacing="0.2">
+                    <textPath href="#top-arc" startOffset="50%" text-anchor="middle">TRƯỜNG ĐẠI HỌC GIAO THÔNG VẬN TẢI</textPath>
+                </text>
+                <text fill="#1A237E" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="8.5" letter-spacing="0.2">
+                    <textPath href="#bot-arc" startOffset="50%" text-anchor="middle">UNIVERSITY OF TRANSPORT AND COMMUNICATIONS</textPath>
+                </text>
+                <path d="M 45 130 C 60 140, 80 140, 100 130 L 100 138 C 80 148, 60 148, 45 138 Z" fill="#FDD835" />
+                <path d="M 155 130 C 140 140, 120 140, 100 130 L 100 138 C 120 148, 140 148, 155 138 Z" fill="#FDD835" />
+                <circle cx="100" cy="136" r="4" fill="#FDD835" />
+                <path d="M 50 135 L 105 132 C 145 120, 140 80, 105 75 C 70 70, 70 45, 100 40 L 85 35 C 45 40, 50 80, 90 85 C 120 90, 120 115, 60 125 Z" fill="#FDD835" />
+                <path d="M 77 133 C 125 120, 125 85, 95 80 C 65 75, 60 45, 92 38" fill="none" stroke="#1A237E" stroke-width="3.5" stroke-dasharray="10,6" />
+            </svg>
 
-    <div class="main-content">
-        <!-- PANEL TRÁI -->
-        <div class="left-panel">
-            <div class="info-box">
-                <h3 class="font-bold text-center text-sm text-blue-800 border-b border-blue-800 pb-1">THÔNG TIN MẪU THỬ THÉP MỀM CT3</h3>
-                <div class="input-group mt-2 text-blue-900">
-                    <label for="inputD">Đường kính d<sub>0</sub> (mm):</label>
-                    <input type="text" id="inputD" value="" readonly placeholder="Chưa đo...">
-                </div>
-                <div class="input-group text-blue-900">
-                    <label for="inputL0">Chiều dài L<sub>0</sub> (mm):</label>
-                    <input type="text" id="inputL0" value="" readonly placeholder="Chưa đo...">
-                </div>
+            Mô phỏng thí nghiệm kéo thép mềm CT3
+
+            <!-- THÔNG TIN PHÒNG THÍ NGHIỆM -->
+            <div style="position: absolute; top: 50%; right: 15px; transform: translateY(-50%); text-align: right; line-height: 1.1;">
+                <div class="text-white font-bold text-[0.7rem] uppercase tracking-wide">TRUNG TÂM KHCN GTVT</div>
+                <div class="text-white font-bold text-[0.7rem] uppercase tracking-wide">PTN Sức Bền Vật Liệu</div>
+                <div class="text-blue-200 font-semibold text-[0.6rem] mt-0.5">Phụ trách: Vũ Ngọc Trinh</div>
             </div>
-            <canvas id="canvasSpecimen"></canvas>
         </div>
 
-        <!-- PANEL PHẢI -->
-        <div class="right-panel">
-            <div class="graph-container">
-                <canvas id="canvasGraph"></canvas>
-                
-                <div class="annotations-overlay">
-                    <div id="anno-1" class="annotation anno-blue">
-                        <b>GĐ Đàn hồi:</b> P tăng nhanh - ΔL tăng ít và tỉ lệ.<br><i class="text-[10px]">ĐL Hooke: σ = E.ε</i>
-                    </div>
-                    <div id="anno-2" class="annotation anno-orange">
-                        <b>GĐ Chảy dẻo:</b> P không đổi - ΔL vẫn tăng (có biến dạng dư).
-                    </div>
-                    <div id="anno-3" class="annotation anno-green">
-                        <b>GĐ Củng cố:</b> P tăng ít - ΔL tăng nhiều. Tổ chức biến đổi.
-                    </div>
-                    <div id="anno-4" class="annotation anno-red">
-                        <b>GĐ Phá huỷ:</b> P giảm dần xuất hiện điểm thắt mẫu đứt gãy.
-                    </div>
+        <div class="main-content">
+            <!-- PANEL TRÁI -->
+            <div class="left-panel" id="leftPanel">
+                <button id="btnFrontView" class="absolute top-3 right-3 z-[30] bg-slate-800/90 hover:bg-slate-700 text-blue-300 text-[11px] px-3 py-1.5 rounded shadow-sm cursor-pointer font-bold border border-blue-500/30 transition-colors pointer-events-auto flex items-center gap-1.5 print-hide" title="Nhìn trực diện mẫu thử">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    TRỰC DIỆN
+                </button>
+
+                <div class="absolute bottom-3 left-3 z-[10] text-[11px] text-slate-400 bg-slate-900/50 px-2 py-1 rounded pointer-events-none border border-slate-700/50 print-hide">
+                    <i class="fas fa-mouse mr-1"></i> Dùng chuột để Xoay / Thu phóng
                 </div>
+                
+                <a href="#page-2" class="scroll-down-btn print-hide">
+                    <span>Báo Cáo</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                </a>
+
+                <div id="canvas3DContainer"></div>
+                <canvas id="canvasSpecimen"></canvas>
             </div>
 
-            <div class="control-panel shadow-inner">
-                <h3 class="font-bold text-center text-gray-700 uppercase text-sm border-b pb-2">Bảng Điều Khiển</h3>
-                <button id="btnStart" class="btn btn-start" disabled>BẮT ĐẦU</button>
-                <button id="btnPause" class="btn btn-pause" disabled>TẠM DỪNG</button>
-                <button id="btnReset" class="btn btn-reset">LÀM LẠI</button>
-                
-                <!-- Bố trí 2 nút tương tác ở khu vực giữa thanh điều khiển (right-panel) -->
-                <div class="my-auto flex flex-col gap-3 py-3 border-y border-gray-300">
-                    <button id="btnMeasureBefore" class="btn bg-teal-600 hover:bg-teal-700 text-[12px] leading-tight py-2.5 shadow-md">
-                        1. ĐO KÍCH THƯỚC<br>TRƯỚC KHI KÉO
+            <!-- PANEL PHẢI -->
+            <div class="right-panel">
+                <div class="graph-container">
+                    
+                    <button id="btn-show-guide" class="absolute top-3 right-3 z-40 bg-blue-600/80 hover:bg-blue-500 text-white backdrop-blur-md px-3 py-1.5 rounded shadow-md font-bold text-[11px] border border-blue-400/50 transition-all flex items-center gap-1.5 cursor-pointer pointer-events-auto print-hide">
+                        <i class="fas fa-book-open"></i> Hướng Dẫn & Lý Thuyết
                     </button>
-                    <button id="btnMeasureAfter" class="btn bg-purple-600 hover:bg-purple-700 text-[12px] leading-tight py-2.5 shadow-md" disabled>
-                        2. ĐO KÍCH THƯỚC<br>SAU KHI KÉO
-                    </button>
-                </div>
 
-                <div class="mt-2">
-                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">Tốc độ gia tải (N/s):</label>
-                    <div class="flex items-center gap-1">
-                        <input type="range" id="speedSlider" min="50" max="5000" value="500" step="50" class="w-full">
+                    <canvas id="canvasGraph"></canvas>
+                    
+                    <div class="annotations-overlay">
+                        <div id="anno-1" class="annotation anno-blue">
+                            <b>GĐ Đàn hồi:</b> P tăng nhanh - ΔL tăng ít và tỉ lệ.<br><i class="text-[10px]">ĐL Hooke: σ = E.ε</i>
+                        </div>
+                        <div id="anno-2" class="annotation anno-orange">
+                            <b>GĐ Chảy dẻo:</b> P không đổi - ΔL vẫn tăng (có biến dạng dư).
+                        </div>
+                        <div id="anno-3" class="annotation anno-green">
+                            <b>GĐ Củng cố:</b> P tăng ít - ΔL tăng nhiều. Tổ chức biến đổi.
+                        </div>
+                        <div id="anno-4" class="annotation anno-red">
+                            <b>GĐ Phá huỷ:</b> P giảm dần xuất hiện điểm thắt mẫu đứt gãy.
+                        </div>
                     </div>
-                    <div class="text-right text-xs font-mono font-bold text-blue-700 mt-1">v = <span id="valSpeed">500</span> N/s</div>
                 </div>
 
-                <div class="mt-auto bg-gray-200 p-3 rounded text-sm text-center">
-                    <div class="font-bold text-gray-700">Giá trị tức thời</div>
-                    <div class="mt-1 text-red-600 font-bold font-mono">P: <span id="valP">0</span> N</div>
-                    <div class="text-blue-600 font-bold font-mono">ΔL: <span id="valdL">0.00</span> mm</div>
+                <!-- THANH ĐIỀU KHIỂN -->
+                <div class="w-full bg-slate-100 border-t border-slate-300 px-4 py-3 flex items-center justify-center gap-2 z-10 shrink-0 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] print-hide">
+                    
+                    <button id="btnMeasure" class="btn bg-teal-600 hover:bg-teal-700 text-[11px] px-3 shadow-md whitespace-nowrap transition-colors duration-300">
+                        1. ĐO KÍCH THƯỚC
+                    </button>
+                    
+                    <button id="btnClamp" class="btn bg-amber-600 hover:bg-amber-700 text-[11px] px-3 shadow-md whitespace-nowrap" disabled>
+                        2. KẸP MẪU
+                    </button>
+                    
+                    <button id="btnStart" class="btn bg-blue-600 hover:bg-blue-700 text-[11px] px-4 shadow-md whitespace-nowrap" disabled>
+                        BẮT ĐẦU
+                    </button>
+                    
+                    <button id="btnPause" class="btn bg-orange-500 hover:bg-orange-600 text-[11px] px-4 shadow-md whitespace-nowrap" disabled>
+                        TẠM DỪNG
+                    </button>
+                    
+                    <button id="btnUnclamp" class="btn bg-rose-600 hover:bg-rose-700 text-[11px] px-3 shadow-md whitespace-nowrap" disabled>
+                        3. THÁO MẪU
+                    </button>
+
+                    <button id="btnReset" class="btn bg-red-600 hover:bg-red-700 text-[11px] px-4 shadow-md whitespace-nowrap">
+                        LÀM LẠI
+                    </button>
+
+                    <div class="flex flex-col items-center justify-center ml-2 border-l border-slate-300 pl-4 w-32 shrink-0">
+                        <label class="block text-[9px] font-bold text-slate-600 mb-1 w-full text-left">TỐC ĐỘ (N/s): <span id="valSpeed" class="text-blue-700">500</span></label>
+                        <input type="range" id="speedSlider" min="50" max="5000" value="500" step="50" class="w-full h-1.5 bg-slate-300 rounded-lg appearance-none cursor-pointer">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<div class="page" id="page-2">
+    <div class="absolute top-4 w-full flex justify-center gap-4 z-50 print-hide">
+        <a href="#page-1" class="bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold py-1.5 px-6 rounded-full border border-blue-500/30 shadow-[0_4px_15px_rgba(0,0,0,0.5)] transition-all flex items-center gap-2 text-sm tracking-wide">
+            <i class="fas fa-arrow-up"></i> Trở Về Mô Phỏng
+        </a>
+        <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 px-6 rounded-full border border-emerald-500/50 shadow-[0_4px_15px_rgba(0,0,0,0.5)] transition-all flex items-center gap-2 text-sm tracking-wide">
+            <i class="fas fa-print"></i> In Báo Cáo
+        </button>
+        <button id="btnAIAssess" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-1.5 px-6 rounded-full border border-purple-500/50 shadow-[0_4px_15px_rgba(0,0,0,0.5)] transition-all flex items-center gap-2 text-sm tracking-wide" disabled>
+            <i class="fas fa-robot"></i> AI Đánh Giá ✨
+        </button>
+    </div>
+
+    <div class="page-2-grid mt-10"> 
+        <!-- Góc 1: Bảng Số Liệu -->
+        <div class="quadrant !p-0" id="quad-1"> 
+            <div class="h-1/3 w-full bg-slate-800/80 border-b border-slate-600 flex flex-col justify-center px-4">
+                <h1 class="text-blue-400 text-center text-md md:text-lg font-black uppercase tracking-widest mb-2 drop-shadow-md">Báo Cáo Thí Nghiệm Kéo Thép Mềm</h1>
+                <div class="flex justify-between items-center text-xs text-slate-300 font-semibold px-2">
+                    <div class="flex items-center gap-2">
+                        <span>Họ và tên SV:</span> 
+                        <input type="text" class="bg-transparent border-b border-slate-500 outline-none focus:border-blue-400 text-white w-40 px-1 py-0.5 transition-colors placeholder-slate-600" placeholder="Nhập tên...">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span>Lớp:</span> 
+                        <input type="text" class="bg-transparent border-b border-slate-500 outline-none focus:border-blue-400 text-white w-20 px-1 py-0.5 transition-colors placeholder-slate-600" placeholder="Nhập lớp...">
+                    </div>
+                </div>
+            </div>
+
+            <div class="h-2/3 w-full bg-slate-900/50 flex flex-col p-3 gap-3 overflow-y-auto">
+                <div class="shrink-0">
+                    <h3 class="text-amber-400 font-bold text-xs uppercase mb-1 border-l-2 border-amber-500 pl-2">1. Mục Đích Thí Nghiệm</h3>
+                    <p class="text-slate-300 text-[0.7rem] text-justify leading-relaxed pl-2">
+                       - Xác định ứng xử của vật liệu khi chịu lực (biểu đồ lực - biến dạng).<br>
+                       - Xác định một số đặc trưng cơ học của vật liệu (thép mềm CT3) khi chịu kéo tĩnh: Các ứng suất giới hạn (tỉ lệ, chảy, bền, phá hủy) và các chỉ tiêu đánh giá độ dẻo (độ giãn dài tương đối, độ thắt tỉ đối). <br>
+                       - Quan sát hiện tượng và dạng mặt đứt gãy.
+                    </p>
+                </div>
+
+                <div class="flex-grow flex flex-col">
+                    <h3 class="text-emerald-400 font-bold text-xs uppercase mb-1 border-l-2 border-emerald-500 pl-2">2. Bảng Số Liệu Thu Được</h3>
+                    
+                    <div class="grid grid-cols-2 gap-2 pl-2 text-[0.7rem]">
+                        <div class="bg-slate-800 p-2 rounded border border-slate-700 shadow-inner">
+                            <div class="font-bold text-blue-300 mb-1 border-b border-slate-600 pb-1 flex justify-between">
+                                <span>Kích thước mẫu (mm)</span> 
+                            </div>
+                            <div class="grid grid-cols-2 gap-y-1 text-slate-300 items-center">
+                                <div>d₀ = <input type="number" id="inp_rep_d0" class="data-input" disabled placeholder="-"></div>
+                                <div>L₀ = <input type="number" id="inp_rep_l0" class="data-input" disabled placeholder="-"></div>
+                                <div>d₁ = <input type="number" id="inp_rep_d1" class="data-input" disabled placeholder="-"></div>
+                                <div>L₁ = <input type="number" id="inp_rep_l1" class="data-input" disabled placeholder="-"></div>
+                                <div>d<sub>ph</sub> = <input type="number" id="inp_rep_dph" class="data-input" disabled placeholder="-"></div>
+                                <div>ΔL = <input type="number" id="inp_rep_dl" class="data-input" disabled placeholder="-"></div>
+                                <div class="col-span-2 mt-1">Mặt đứt xiên (độ) = <input type="number" id="inp_rep_angle" class="data-input ml-1" placeholder="-"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800 p-2 rounded border border-slate-700 shadow-inner">
+                            <div class="font-bold text-rose-300 mb-1 border-b border-slate-600 pb-1 flex justify-between">
+                                <span>Lực đặc trưng (N)</span> 
+                            </div>
+                            <div class="flex flex-col justify-between h-[calc(100%-20px)] text-slate-300">
+                                <div class="flex justify-between items-center">
+                                    <span>P<sub>tl</sub> (Tỉ lệ)</span>
+                                    <input type="number" id="inp_rep_ptl" class="data-input" disabled placeholder="-">
+                                </div>
+                                <div class="flex justify-between items-center mt-1">
+                                    <span>P<sub>ch</sub> (Chảy)</span>
+                                    <input type="number" id="inp_rep_pch" class="data-input" disabled placeholder="-">
+                                </div>
+                                <div class="flex justify-between items-center mt-1">
+                                    <span>P<sub>b</sub> (Bền)</span>
+                                    <input type="number" id="inp_rep_pb" class="data-input" disabled placeholder="-">
+                                </div>
+                                <div class="flex justify-between items-center mt-1">
+                                    <span>P<sub>ph</sub> (Phá hủy)</span>
+                                    <input type="number" id="inp_rep_pph" class="data-input" disabled placeholder="-">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Góc 2: Tính toán -->
+        <div class="quadrant" id="quad-2">
+            <h2 class="text-emerald-400 text-[0.85rem] font-bold uppercase tracking-wider border-l-4 border-emerald-500 pl-2 mb-1.5 border-b border-slate-700 pb-1">
+                3. Tính Toán Đặc Trưng Cơ Học Của Mẫu
+            </h2>
+            
+            <div class="flex-grow flex flex-col gap-1 overflow-y-auto pr-2 text-[0.7rem] text-slate-300 font-mono custom-scrollbar relative">
+                
+                <div id="calc-lock-overlay" class="absolute inset-0 z-10 bg-slate-800/80 backdrop-blur-[1px] flex flex-col items-center justify-center rounded transition-opacity duration-300">
+                    <i class="fas fa-lock text-slate-400 text-xl mb-2"></i>
+                    <p class="text-slate-300 text-center font-sans font-bold px-2">Hoàn thành đúng 100%<br>Bảng Số Liệu bên trái<br>để mở khóa tính toán.</p>
+                </div>
+
+                <div class="text-slate-400 text-[0.65rem] italic mb-0.5 flex flex-col gap-0.5 bg-slate-800 p-1.5 rounded border border-slate-700">
+                    <div class="flex justify-between items-center">
+                        <span>Tiết diện ban đầu: F<sub>o</sub> = &pi;d₀²/4</span>
+                        <span id="hint_f0" class="text-yellow-300 font-bold hidden bg-slate-900 px-1 rounded shadow-inner"></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span>Tiết diện đứt gãy: F<sub>ph</sub> = &pi;d<sub>ph</sub>²/4</span>
+                        <span id="hint_fph" class="text-yellow-300 font-bold hidden bg-slate-900 px-1 rounded shadow-inner"></span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between bg-slate-800 p-1 rounded border border-slate-700">
+                    <div class="flex items-center gap-0.5">
+                        <span class="w-[60px] font-semibold font-sans text-[0.65rem] leading-tight text-blue-200">GH tỉ lệ</span>
+                        <span>&sigma;<sub>tl</sub>=</span>
+                        <div class="fraction text-blue-300 text-[0.6rem]"><span class="frac-top">P<sub>tl</sub></span><span class="frac-bot">F<sub>o</sub></span></div>
+                        <div class="calc-sub hidden flex items-center">
+                            <span class="mx-0.5">=</span>
+                            <div class="fraction text-yellow-200 text-[0.6rem]"><span class="frac-top" id="sub_ptl"></span><span class="frac-bot" id="sub_f0_1"></span></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-0.5 shrink-0">
+                        <span>=</span>
+                        <input type="number" id="inp_sigma_tl" class="calc-input w-12 text-[0.65rem]" placeholder="?" disabled>
+                        <span class="text-[0.55rem]">MPa</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between bg-slate-800 p-1 rounded border border-slate-700">
+                    <div class="flex items-center gap-0.5">
+                        <span class="w-[60px] font-semibold font-sans text-[0.65rem] leading-tight text-amber-200">GH chảy</span>
+                        <span>&sigma;<sub>ch</sub>=</span>
+                        <div class="fraction text-amber-300 text-[0.6rem]"><span class="frac-top">P<sub>ch</sub></span><span class="frac-bot">F<sub>o</sub></span></div>
+                        <div class="calc-sub hidden flex items-center">
+                            <span class="mx-0.5">=</span>
+                            <div class="fraction text-yellow-200 text-[0.6rem]"><span class="frac-top" id="sub_pch"></span><span class="frac-bot" id="sub_f0_2"></span></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-0.5 shrink-0">
+                        <span>=</span>
+                        <input type="number" id="inp_sigma_ch" class="calc-input w-12 text-[0.65rem]" placeholder="?" disabled>
+                        <span class="text-[0.55rem]">MPa</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between bg-slate-800 p-1 rounded border border-slate-700">
+                    <div class="flex items-center gap-0.5">
+                        <span class="w-[60px] font-semibold font-sans text-[0.65rem] leading-tight text-emerald-200">GH bền</span>
+                        <span>&sigma;<sub>b</sub>=</span>
+                        <div class="fraction text-emerald-300 text-[0.6rem]"><span class="frac-top">P<sub>b</sub></span><span class="frac-bot">F<sub>o</sub></span></div>
+                        <div class="calc-sub hidden flex items-center">
+                            <span class="mx-0.5">=</span>
+                            <div class="fraction text-yellow-200 text-[0.6rem]"><span class="frac-top" id="sub_pb"></span><span class="frac-bot" id="sub_f0_3"></span></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-0.5 shrink-0">
+                        <span>=</span>
+                        <input type="number" id="inp_sigma_b" class="calc-input w-12 text-[0.65rem]" placeholder="?" disabled>
+                        <span class="text-[0.55rem]">MPa</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between bg-slate-800 p-1 rounded border border-slate-700">
+                    <div class="flex items-center gap-0.5">
+                        <span class="w-[60px] font-semibold font-sans text-[0.65rem] leading-tight text-rose-200">GH phá<br>hoại</span>
+                        <span>&sigma;<sub>ph</sub>=</span>
+                        <div class="fraction text-rose-300 text-[0.6rem]"><span class="frac-top">P<sub>ph</sub></span><span class="frac-bot">F<sub>ph</sub></span></div>
+                        <div class="calc-sub hidden flex items-center">
+                            <span class="mx-0.5">=</span>
+                            <div class="fraction text-yellow-200 text-[0.6rem]"><span class="frac-top" id="sub_pph"></span><span class="frac-bot" id="sub_fph_1"></span></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-0.5 shrink-0">
+                        <span>=</span>
+                        <input type="number" id="inp_sigma_ph" class="calc-input w-12 text-[0.65rem]" placeholder="?" disabled>
+                        <span class="text-[0.55rem]">MPa</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between bg-slate-800 p-1 rounded border border-slate-700">
+                    <div class="flex items-center gap-0.5">
+                        <span class="w-[60px] font-semibold font-sans text-[0.65rem] leading-tight text-purple-200">Độ giãn<br>dài</span>
+                        <span>&delta;=</span>
+                        <div class="fraction text-purple-300 text-[0.6rem]"><span class="frac-top">L<sub>1</sub>-L<sub>0</sub></span><span class="frac-bot">L<sub>0</sub></span></div>
+                        <span class="text-[0.55rem]">.100</span>
+                        <div class="calc-sub hidden flex items-center">
+                            <span class="mx-0.5">=</span>
+                            <div class="fraction text-yellow-200 text-[0.6rem]"><span class="frac-top"><span id="sub_l1"></span>-<span id="sub_l0_1"></span></span><span class="frac-bot" id="sub_l0_2"></span></div>
+                            <span class="text-[0.55rem] text-yellow-200">.100</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-0.5 shrink-0">
+                        <span>=</span>
+                        <input type="number" id="inp_delta" class="calc-input w-12 text-[0.65rem]" placeholder="?" disabled>
+                        <span class="text-[0.55rem]">%</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between bg-slate-800 p-1 rounded border border-slate-700">
+                    <div class="flex items-center gap-0.5">
+                        <span class="w-[60px] font-semibold font-sans text-[0.65rem] leading-tight text-teal-200">Độ co<br>ngang</span>
+                        <span>&psi;=</span>
+                        <div class="fraction text-teal-300 text-[0.6rem]"><span class="frac-top">F<sub>o</sub>-F<sub>ph</sub></span><span class="frac-bot">F<sub>o</sub></span></div>
+                        <span class="text-[0.55rem]">.100</span>
+                        <div class="calc-sub hidden flex items-center">
+                            <span class="mx-0.5">=</span>
+                            <div class="fraction text-yellow-200 text-[0.6rem]"><span class="frac-top"><span id="sub_f0_4"></span>-<span id="sub_fph_2"></span></span><span class="frac-bot" id="sub_f0_5"></span></div>
+                            <span class="text-[0.55rem] text-yellow-200">.100</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-0.5 shrink-0">
+                        <span>=</span>
+                        <input type="number" id="inp_psi" class="calc-input w-12 text-[0.65rem]" placeholder="?" disabled>
+                        <span class="text-[0.55rem]">%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Góc 3: Đồ thị ứng suất -->
+        <div class="quadrant" id="quad-3">
+            <h2 class="text-amber-400 text-[0.85rem] font-bold uppercase tracking-wider border-l-4 border-amber-500 pl-2 mb-1.5 border-b border-slate-700 pb-1">
+                4. Đồ Thị Ứng Suất - Biến Dạng (Thực)
+            </h2>
+            <div class="flex-grow relative border-2 border-slate-600 rounded-lg bg-slate-900 shadow-inner overflow-hidden">
+                <canvas id="canvasStressStrain" class="absolute top-0 left-0 w-full h-full"></canvas>
+            </div>
+        </div>
+
+        <!-- Góc 4: Nhận xét (Cải tiến với nét chấm mượt mà) -->
+        <div class="quadrant" id="quad-4">
+            <h2 class="text-rose-400 text-[0.85rem] font-bold uppercase tracking-wider border-l-4 border-rose-500 pl-2 mb-1.5 border-b border-slate-700 pb-1 flex justify-between items-center">
+                <span>5. Nhận Xét & Đánh Giá</span>
+                <button id="btnAIAssessQuad" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-1 px-3 rounded text-[0.6rem] transition-all flex items-center gap-1 shadow-md" disabled>
+                    <i class="fas fa-robot"></i> AI Giải Đáp
+                </button>
+            </h2>
+            <div class="flex-grow flex flex-col gap-2 overflow-y-auto pr-2 text-slate-300 text-[0.7rem] leading-relaxed custom-scrollbar">
+                
+                <div class="bg-slate-800 p-2 rounded border border-slate-700 shadow-inner">
+                    <h3 class="text-blue-300 font-bold mb-1 border-b border-slate-600 pb-0.5">A. Nhận xét biểu đồ kéo thép</h3>
+                    <ul class="list-disc pl-4 space-y-1.5 text-[0.65rem]">
+                        <li class="flex items-end">
+                            <b class="whitespace-nowrap text-slate-100">Giai đoạn đàn hồi:</b>
+                            <input type="text" class="flex-1 bg-transparent border-b border-dotted border-slate-400 outline-none ml-1 text-[0.65rem] text-slate-200 placeholder-slate-500 focus:border-blue-400 transition-colors" placeholder="Viết nhận xét...">
+                        </li>
+                        <li class="flex items-end">
+                            <b class="whitespace-nowrap text-slate-100">Giai đoạn chảy dẻo:</b>
+                            <input type="text" class="flex-1 bg-transparent border-b border-dotted border-slate-400 outline-none ml-1 text-[0.65rem] text-slate-200 placeholder-slate-500 focus:border-blue-400 transition-colors" placeholder="Viết nhận xét...">
+                        </li>
+                        <li class="flex items-end">
+                            <b class="whitespace-nowrap text-slate-100">Giai đoạn củng cố:</b>
+                            <input type="text" class="flex-1 bg-transparent border-b border-dotted border-slate-400 outline-none ml-1 text-[0.65rem] text-slate-200 placeholder-slate-500 focus:border-blue-400 transition-colors" placeholder="Viết nhận xét...">
+                        </li>
+                        <li class="flex items-end">
+                            <b class="whitespace-nowrap text-slate-100">Giai đoạn phá hủy:</b>
+                            <input type="text" class="flex-1 bg-transparent border-b border-dotted border-slate-400 outline-none ml-1 text-[0.65rem] text-slate-200 placeholder-slate-500 focus:border-blue-400 transition-colors" placeholder="Viết nhận xét...">
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-slate-800 p-2 rounded border border-slate-700 shadow-inner">
+                    <h3 class="text-rose-300 font-bold mb-1 border-b border-slate-600 pb-0.5">B. Dạng phá hỏng của vật liệu</h3>
+                    <div class="space-y-1.5 mt-1">
+                        <div class="flex items-end">
+                            <b class="whitespace-nowrap text-[0.65rem] text-slate-100">Mẫu phá huỷ theo hình thức:</b>
+                            <input type="text" class="flex-1 bg-transparent border-b border-dotted border-slate-400 outline-none ml-1 text-[0.65rem] text-slate-200 placeholder-slate-500 focus:border-blue-400 transition-colors" placeholder="Viết nhận xét...">
+                        </div>
+                        <div class="flex items-end">
+                            <b class="whitespace-nowrap text-[0.65rem] text-slate-100">Mặt cắt đứt gãy có dạng:</b>
+                            <input type="text" class="flex-1 bg-transparent border-b border-dotted border-slate-400 outline-none ml-1 text-[0.65rem] text-slate-200 placeholder-slate-500 focus:border-blue-400 transition-colors" placeholder="Viết nhận xét...">
+                        </div>
+                        <div class="flex items-end">
+                            <i class="whitespace-nowrap text-[0.65rem] text-slate-300">Giải thích:</i>
+                            <input type="text" class="flex-1 bg-transparent border-b border-dotted border-slate-400 outline-none ml-1 text-[0.65rem] text-slate-200 placeholder-slate-500 focus:border-blue-400 transition-colors" placeholder="Viết nhận xét...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 p-2 rounded border border-emerald-700/50 shadow-inner mt-auto flex flex-col">
+                    <h3 class="text-emerald-400 font-bold mb-1 border-b border-slate-700 pb-0.5">C. Câu hỏi ôn tập</h3>
+                    <ol class="list-decimal pl-4 space-y-1 text-slate-400 italic text-[0.65rem]">
+                        <li>Tại sao mặt đứt gãy của mẫu thép CT3 lại tạo thành hình nón và có góc nghiêng 45°?</li>
+                        <li>Trong giai đoạn chảy dẻo, nếu ta dỡ tải hoàn toàn thì mẫu thép có khôi phục lại chiều dài L<sub>0</sub> không?</li>
+                        <li>Dựa vào kết quả của 2 đại lượng nào để kết luận thép CT3 là kim loại rất dẻo?</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="guide-modal" class="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-md flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 print-hide">
+    <div class="bg-slate-800 border border-slate-500 rounded-xl shadow-2xl w-[90vw] max-w-6xl h-[85vh] flex flex-col overflow-hidden relative transform scale-95 transition-transform duration-300" id="guide-content">
+        
+        <div class="bg-slate-900 px-6 py-4 border-b border-slate-600 flex justify-between items-center shrink-0">
+            <h2 class="text-xl font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-graduation-cap text-yellow-400"></i> Cơ Sở Lý Thuyết & Hướng Dẫn Thực Hành
+            </h2>
+            <button id="btn-close-guide" class="text-slate-400 hover:text-red-400 text-2xl transition-colors focus:outline-none hidden">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="flex flex-1 overflow-hidden">
+            <div class="w-1/2 h-full p-6 overflow-y-auto border-r border-slate-700 custom-scrollbar text-slate-300 text-sm leading-relaxed space-y-6">
+                <section>
+                    <h3 class="text-yellow-400 font-bold text-lg mb-2 uppercase border-b border-slate-600 pb-1">I. Mục đích thí nghiệm</h3>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>Khảo sát và quan sát trực quan **Biểu đồ kéo thép mềm CT3** <strong>(Lực kéo P - Biến dạng)</strong> xác định ứng xử của vật liệu khi chịu lực.</li>
+                        <li>Xác định một số đại lượng cơ học đặc trưng: Các ứng suất giới hạn (tỉ lệ , chảy , bền , phá hủy).</li>
+                        <li>Tính toán và đánh giá các chỉ tiêu về **độ dẻo** của vật liệu.</li>
+                        <li>Quan sát hiện tượng **thắt cổ chai** và phân tích hình dáng mặt cắt đứt gãy dạng **chén-nón**.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3 class="text-yellow-400 font-bold text-lg mb-2 uppercase border-b border-slate-600 pb-1">II. Cơ sở lý thuyết & Công thức</h3>
+                    <p class="mb-2"><strong>1. Tính toán Ứng suất :</strong> Khi thanh chịu kéo đúng tâm Ứng suất được tính bằng lực tác dụng chia cho diện tích mặt cắt ngang.</p>
+                    <div class="bg-slate-900 p-3 rounded border border-slate-700 font-mono text-center mb-3">
+                        <span>&sigma; = </span>
+                        <div class="inline-flex flex-col items-center justify-center align-middle mx-2 text-blue-300">
+                            <span class="border-b border-slate-500 px-2">P</span>
+                            <span class="px-2">F</span>
+                        </div>
+                        <span> ; với Tiết diện tròn F = </span>
+                        <div class="inline-flex flex-col items-center justify-center align-middle mx-2 text-emerald-300">
+                            <span class="border-b border-slate-500 px-2">&pi;.d<sup>2</sup></span>
+                            <span class="px-2">4</span>
+                        </div>
+                    </div>
+                    <ul class="list-none space-y-1 mb-3 text-[0.8rem] italic text-slate-400">
+                        <li>* Chú ý: Ở giai đoạn phá hoại, phải dùng tiết diện mặt cắt đứt gãy (F_ph tính theo d_ph) để tính ứng suất phá hoại thực tế. Các ứng suất khác tính theo F_0.</li>
+                    </ul>
+
+                    <p class="mb-2"><strong>2. Chỉ tiêu đánh giá độ dẻo:</strong></p>
+                    <div class="flex justify-around items-center bg-slate-900 p-3 rounded border border-slate-700 font-mono text-center mb-3">
+                        <div>
+                            <span>&delta; = </span>
+                            <div class="inline-flex flex-col items-center justify-center align-middle mx-1 text-yellow-300">
+                                <span class="border-b border-slate-500 px-2">L<sub>1</sub> - L<sub>0</sub></span>
+                                <span class="px-2">L<sub>0</sub></span>
+                            </div>
+                            <span>. 100%</span>
+                        </div>
+                        <div class="w-px h-10 bg-slate-600 mx-2"></div>
+                        <div>
+                            <span>&psi; = </span>
+                            <div class="inline-flex flex-col items-center justify-center align-middle mx-1 text-yellow-300">
+                                <span class="border-b border-slate-500 px-2">F<sub>0</sub> - F<sub>ph</sub></span>
+                                <span class="px-2">F<sub>0</sub></span>
+                            </div>
+                            <span>. 100%</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="w-1/2 h-full p-6 overflow-y-auto custom-scrollbar text-slate-300 text-sm leading-relaxed space-y-6">
+                <section>
+                    <h3 class="text-emerald-400 font-bold text-lg mb-2 uppercase border-b border-slate-600 pb-1">III. Quy trình thao tác phần mềm</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-slate-900/50 p-3 rounded border border-slate-700">
+                            <h4 class="text-white font-bold mb-1"><span class="bg-teal-600 text-white px-2 py-0.5 rounded mr-2 text-xs">BƯỚC 1</span>Đo kích thước mẫu ban đầu</h4>
+                            <p>Nhấn nút <b>"1. ĐO KÍCH THƯỚC"</b>. Máy tính sẽ khởi tạo mẫu ngẫu nhiên. Sinh viên đọc các thông số trên thước đo 3D và phải tự NHẬP ĐÚNG d_0, L_0 vào Bảng Số Liệu để mở khóa bước tiếp theo.</p>
+                        </div>
+
+                        <div class="bg-slate-900/50 p-3 rounded border border-slate-700">
+                            <h4 class="text-white font-bold mb-1"><span class="bg-amber-600 text-white px-2 py-0.5 rounded mr-2 text-xs">BƯỚC 2</span>Kẹp mẫu & Kéo tĩnh</h4>
+                            <p>Nhấn <b>"2. KẸP MẪU"</b> rồi nhấn <b>"BẮT ĐẦU"</b>. Hãy quan sát trực tiếp mô hình biến dạng và sự tương quan trên biểu đồ LỰC KÉO P - BIẾN DẠNG. Ghi nhớ các mốc Lực đặc trưng sinh ra.</p>
+                        </div>
+
+                        <div class="bg-slate-900/50 p-3 rounded border border-slate-700">
+                            <h4 class="text-white font-bold mb-1"><span class="bg-rose-600 text-white px-2 py-0.5 rounded mr-2 text-xs">BƯỚC 3</span>Tháo và Đo lại mẫu sau đứt</h4>
+                            <p>Khi mẫu đã đứt, nhấn <b>"3. THÁO MẪU"</b> rồi nhấn tiếp <b>"4. ĐO LẠI KÍCH THƯỚC"</b>. Đọc kỹ kích thước đứt gãy trên màn hình, sau đó tự tay NHẬP TOÀN BỘ số liệu đo được và Bảng Kết Quả Lực vào Bảng Số Liệu.</p>
+                        </div>
+
+                        <div class="bg-slate-900/50 p-3 rounded border border-slate-700">
+                            <h4 class="text-white font-bold mb-1"><span class="bg-purple-600 text-white px-2 py-0.5 rounded mr-2 text-xs">BƯỚC 4</span>Tính toán & Mở khóa Đồ thị Thực</h4>
+                            <p>Khi Bảng số liệu được nhập đúng 100%, Ô tính toán Đặc trưng Cơ học sẽ được mở khóa. Các giá trị bạn nhập sẽ tự động <b>thay số vào công thức</b> để bạn dễ dàng bấm máy tính. Điền đúng toàn bộ sẽ kích hoạt Đồ thị Ứng suất thực tế ẩn giấu.</p>
+			</div>
+
+                        <div class="bg-slate-900/50 p-3 rounded border border-slate-700">
+                            <h4 class="text-white font-bold mb-1"><span class="bg-purple-600 text-white px-2 py-0.5 rounded mr-2 text-xs">BƯỚC 5</span>IN BÁO CÁO NỘP</h4>
+                            <p>Khi hoàn thiện tính toán 100%, Sinh viên hoàn thiện phần nhận xét biểu đồ, dạng phá hỏng để hoàn thiện báo cáo. Nhấn nút IN BÁO CÁO để in báo cáo chuẩn bị nộp (định dạng trang in A4, trang dọc).</p>
+
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div id="guide-footer" class="bg-slate-900 px-6 py-4 border-t border-slate-600 flex justify-between items-center shrink-0">
+            <label id="agree-label" class="flex items-center gap-2 cursor-not-allowed opacity-50 text-slate-300 transition-opacity">
+                <input type="checkbox" id="agree-check" class="w-4 h-4 cursor-not-allowed" disabled>
+                <span class="font-bold">Tôi đã đọc hiểu cơ sở lý thuyết và quy trình <span id="agree-timer" class="text-red-400 ml-1">(Chờ 15s)</span></span>
+            </label>
+            <button id="btn-start-sim" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded font-bold uppercase transition-all opacity-50 cursor-not-allowed pointer-events-none" disabled>
+                Vào Mô Phỏng
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+
     let state = {
         isRunning: false,
         isFinished: false,
@@ -134,43 +693,48 @@
         scaleL: 1,
         breakRatio: 0.5,
         yAxisMax: 40000,
-        isMeasuredBefore: false, // Trạng thái đo lần 1
-        isMeasuredAfter: false   // Trạng thái đo lần 2
+        isMeasuredBefore: false,
+        isClamped: false,       
+        isUnclamped: false,
+        isMeasuredAfter: false,
+        specimenOffsetX: -70,   
+        targetOffsetX: -70,
+        isStressStrainUnlocked: false,
+        isCalcUnlocked: false
     };
 
-    const CONSTANTS = {
-        MAX_X_BASE: 25
-    };
+    const CONSTANTS = { MAX_X_BASE: 25 };
 
-    const canvasSpecimen = document.getElementById('canvasSpecimen');
-    const ctxS = canvasSpecimen.getContext('2d');
-    const canvasGraph = document.getElementById('canvasGraph');
-    const ctxG = canvasGraph.getContext('2d');
+    const getEl = (id) => document.getElementById(id);
     
-    const inputD = document.getElementById('inputD');
-    const inputL0 = document.getElementById('inputL0');
-    const btnStart = document.getElementById('btnStart');
-    const btnPause = document.getElementById('btnPause');
-    const btnReset = document.getElementById('btnReset');
+    const canvasSpecimen = getEl('canvasSpecimen'); 
+    const ctxS = canvasSpecimen ? canvasSpecimen.getContext('2d') : null;
+    const canvasGraph = getEl('canvasGraph');
+    const ctxG = canvasGraph ? canvasGraph.getContext('2d') : null;
+    const leftPanel = getEl('leftPanel');
+    const container3D = getEl('canvas3DContainer');
     
-    const btnMeasureBefore = document.getElementById('btnMeasureBefore');
-    const btnMeasureAfter = document.getElementById('btnMeasureAfter');
+    const btnStart = getEl('btnStart');
+    const btnPause = getEl('btnPause');
+    const btnReset = getEl('btnReset');
+    const btnMeasure = getEl('btnMeasure'); 
+    const btnClamp = getEl('btnClamp'); 
+    const btnUnclamp = getEl('btnUnclamp'); 
+    const btnFrontView = getEl('btnFrontView');
+    const speedSlider = getEl('speedSlider');
+    const valSpeed = getEl('valSpeed');
     
-    const speedSlider = document.getElementById('speedSlider');
-    const valSpeed = document.getElementById('valSpeed');
-    const valP = document.getElementById('valP');
-    const valdL = document.getElementById('valdL');
-    
+    const btnAIAssess = getEl('btnAIAssess');
+    const btnAIAssessQuad = getEl('btnAIAssessQuad');
+    const aiModal = getEl('aiModal');
+    const closeAiModal = getEl('closeAiModal');
+    const aiContent = getEl('aiContent');
+
     const annotations = [
-        document.getElementById('anno-1'),
-        document.getElementById('anno-2'),
-        document.getElementById('anno-3'),
-        document.getElementById('anno-4')
+        getEl('anno-1'), getEl('anno-2'),
+        getEl('anno-3'), getEl('anno-4')
     ];
 
-    let animationFrameId;
-
-    // --- MÔ HÌNH TOÁN HỌC ĐƯỜNG CONG CT3 ---
     function getPBase(x) {
         if (x === 0) return 0;
         if (x <= 0.3) return 250 * Math.pow(x / 0.3, 2);
@@ -182,301 +746,514 @@
         return 0; 
     }
 
-    function resizeCanvases() {
-        const rectS = canvasSpecimen.parentElement.getBoundingClientRect();
-        canvasSpecimen.width = rectS.width;
-        canvasSpecimen.height = rectS.height;
-        
-        const rectG = canvasGraph.parentElement.getBoundingClientRect();
-        canvasGraph.width = rectG.width;
-        canvasGraph.height = rectG.height;
-        
-        drawAll();
-    }
-    window.addEventListener('resize', resizeCanvases);
+    let scene, camera, renderer, controls;
+    let topGripGroup, botGripGroup;
+    let specimenTopOuterMesh, specimenTopFracMesh; 
+    let specimenBotOuterMesh, specimenBotFracMesh;
+    let specData3D = {}; 
 
-    function drawLeaderLine(ctx, textX, textY, edgeX, edgeY, color, isLeft = false) {
-        ctx.beginPath();
-        if (isLeft) {
-            ctx.moveTo(textX + 5, textY - 4);
-            ctx.lineTo(textX + 20, textY - 4);
-        } else {
-            ctx.moveTo(textX, textY - 4);
-            ctx.lineTo(textX - 15, textY - 4);
+    function createNoiseTexture() {
+        const size = 512;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const context = canvas.getContext('2d');
+        const imgData = context.createImageData(size, size);
+        for (let i = 0; i < imgData.data.length; i += 4) {
+            const val = Math.floor(Math.random() * 255);
+            imgData.data[i] = val;
+            imgData.data[i+1] = val;
+            imgData.data[i+2] = val;
+            imgData.data[i+3] = 255;
         }
-        ctx.lineTo(edgeX, edgeY);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        
-        ctx.beginPath();
-        ctx.arc(edgeX, edgeY, 2.5, 0, Math.PI*2);
-        ctx.fillStyle = color;
-        ctx.fill();
+        context.putImageData(imgData, 0, 0);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(4, 4); 
+        return texture;
     }
 
-    function draw3DGrip(ctx, cx, gripEdgeY, isTop) {
-        const gw = 110, gh = 65;
-        const yStart = isTop ? gripEdgeY - gh : gripEdgeY;
+    function init3D() {
+        if(!container3D) return;
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1e293b); 
 
-        const grd = ctx.createLinearGradient(cx - gw/2, 0, cx + gw/2, 0);
-        grd.addColorStop(0, '#334155'); grd.addColorStop(0.2, '#64748b'); 
-        grd.addColorStop(0.5, '#94a3b8'); grd.addColorStop(0.8, '#475569'); 
-        grd.addColorStop(1, '#1e293b');
+        camera = new THREE.PerspectiveCamera(45, container3D.clientWidth / container3D.clientHeight, 1, 1000);
+        camera.position.set(0, 0, 310);
 
-        ctx.fillStyle = grd; ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.rect(cx - gw/2, yStart, gw, gh); ctx.fill(); ctx.stroke();
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+        // Khởi tạo DPI an toàn
+        renderer.setPixelRatio(Math.max(window.devicePixelRatio || 1, 2));
+        renderer.setSize(container3D.clientWidth, container3D.clientHeight);
+        renderer.shadowMap.enabled = true;
+        container3D.appendChild(renderer.domElement);
 
-        const jw = 48, jh = 35;
-        const jy = isTop ? gripEdgeY - jh : gripEdgeY;
-        const jgrd = ctx.createLinearGradient(cx - jw/2, 0, cx + jw/2, 0);
-        jgrd.addColorStop(0, '#94a3b8'); jgrd.addColorStop(0.5, '#f8fafc'); jgrd.addColorStop(1, '#64748b');
-        ctx.fillStyle = jgrd;
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.72); 
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.9); 
+        dirLight.position.set(100, 100, 100);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+        const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.6); 
+        dirLight2.position.set(-100, 50, -100);
+        scene.add(dirLight2);
+        const frontLight = new THREE.DirectionalLight(0xffffff, 1.5); 
+        frontLight.position.set(0, 0, 250);
+        scene.add(frontLight);
+
+        function createGrip() {
+            const group = new THREE.Group();
+            const housingMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.7, metalness: 0.4 }); 
+            const jawMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.3, metalness: 0.8 }); 
+            const handleMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.8, metalness: 0.1 }); 
+
+            const connector = new THREE.Mesh(new THREE.CylinderGeometry(14, 14, 30, 32), housingMat);
+            connector.position.y = 55;
+            group.add(connector);
+            const backPlate = new THREE.Mesh(new THREE.BoxGeometry(70, 50, 25), housingMat);
+            backPlate.position.set(0, 25, -20);
+            group.add(backPlate);
+            const leftPlate = new THREE.Mesh(new THREE.BoxGeometry(20, 50, 45), housingMat);
+            leftPlate.position.set(-25, 25, 15);
+            group.add(leftPlate);
+            const rightPlate = new THREE.Mesh(new THREE.BoxGeometry(20, 50, 45), housingMat);
+            rightPlate.position.set(25, 25, 15);
+            group.add(rightPlate);
+            const topPlate = new THREE.Mesh(new THREE.BoxGeometry(70, 10, 45), housingMat);
+            topPlate.position.set(0, 45, 15);
+            group.add(topPlate);
+
+            const shapeR = new THREE.Shape();
+            shapeR.moveTo(0, 14);
+            shapeR.lineTo(18, 14);
+            shapeR.lineTo(18, -14);
+            shapeR.lineTo(0, -14);
+            shapeR.lineTo(0, -7);   
+            shapeR.lineTo(6, 0);    
+            shapeR.lineTo(0, 7);    
+            shapeR.lineTo(0, 14);
+
+            const jawGeoR = new THREE.ExtrudeGeometry(shapeR, { depth: 40, bevelEnabled: false });
+            jawGeoR.center(); 
+            jawGeoR.rotateX(Math.PI / 2); 
+            
+            const rightJaw = new THREE.Mesh(jawGeoR, jawMat);
+            rightJaw.position.set(13, 20, 0); 
+            group.add(rightJaw);
+
+            const jawGeoL = jawGeoR.clone();
+            jawGeoL.rotateY(Math.PI); 
+            const leftJaw = new THREE.Mesh(jawGeoL, jawMat);
+            leftJaw.position.set(-13, 20, 0);
+            group.add(leftJaw);
+
+            const wheel = new THREE.Mesh(new THREE.CylinderGeometry(18, 18, 6, 16), handleMat);
+            wheel.rotation.z = Math.PI / 2;
+            wheel.position.set(-42, 25, 5);
+            group.add(wheel);
+            
+            const spoke = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 12, 8), jawMat);
+            spoke.rotation.z = Math.PI / 2;
+            spoke.position.set(-35, 25, 5);
+            group.add(spoke);
+            
+            for(let i=0; i<4; i++) {
+                const peg = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 8, 8), handleMat);
+                peg.position.set(-45, 25 + 16*Math.sin(i*Math.PI/2), 5 + 16*Math.cos(i*Math.PI/2));
+                peg.rotation.x = i*Math.PI/2;
+                group.add(peg);
+            }
+            return group;
+        }
+
+        const metalMat = new THREE.MeshStandardMaterial({ 
+            color: 0xaaaaaa,      
+            roughness: 0.3,       
+            metalness: 0.9,       
+            side: THREE.DoubleSide 
+        });
+
+        const noiseTex = createNoiseTexture();
+        const fractureMat = new THREE.MeshStandardMaterial({
+            color: 0x737373,     
+            roughness: 1.0,      
+            metalness: 0.2,      
+            bumpMap: noiseTex,   
+            bumpScale: 1.0,      
+            side: THREE.DoubleSide
+        });
+
+        topGripGroup = createGrip();
+        scene.add(topGripGroup); 
+
+        botGripGroup = createGrip();
+        botGripGroup.rotation.z = Math.PI; 
+        scene.add(botGripGroup);
+
+        const dummyGeo = new THREE.LatheGeometry([new THREE.Vector2(0,0), new THREE.Vector2(1,1)], 32);
+        specimenTopOuterMesh = new THREE.Mesh(dummyGeo, metalMat);
+        specimenTopFracMesh = new THREE.Mesh(dummyGeo, fractureMat);
         
-        ctx.beginPath();
-        if (isTop) {
-            ctx.moveTo(cx - jw/2, jy); ctx.lineTo(cx - 5, jy); ctx.lineTo(cx - 15, jy + jh); ctx.lineTo(cx - jw/2, jy + jh);
-        } else {
-            ctx.moveTo(cx - jw/2, jy + jh); ctx.lineTo(cx - 5, jy + jh); ctx.lineTo(cx - 15, jy); ctx.lineTo(cx - jw/2, jy);
-        }
-        ctx.fill(); ctx.stroke();
-
-        ctx.beginPath();
-        if (isTop) {
-            ctx.moveTo(cx + jw/2, jy); ctx.lineTo(cx + 5, jy); ctx.lineTo(cx + 15, jy + jh); ctx.lineTo(cx + jw/2, jy + jh);
-        } else {
-            ctx.moveTo(cx + jw/2, jy + jh); ctx.lineTo(cx + 5, jy + jh); ctx.lineTo(cx + 15, jy); ctx.lineTo(cx + jw/2, jy);
-        }
-        ctx.fill(); ctx.stroke();
-
-        ctx.fillStyle = '#0f172a';
-        ctx.beginPath(); ctx.arc(cx - 35, yStart + gh/2, 7, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(cx + 35, yStart + gh/2, 7, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#cbd5e1';
-        ctx.beginPath(); ctx.arc(cx - 35, yStart + gh/2, 4, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(cx + 35, yStart + gh/2, 4, 0, Math.PI*2); ctx.fill();
+        specimenBotOuterMesh = new THREE.Mesh(dummyGeo, metalMat);
+        specimenBotFracMesh = new THREE.Mesh(dummyGeo, fractureMat);
+        
+        scene.add(specimenTopOuterMesh);
+        scene.add(specimenTopFracMesh);
+        scene.add(specimenBotOuterMesh);
+        scene.add(specimenBotFracMesh);
     }
 
-    function drawSpecimenCanvas() {
-        const w = canvasSpecimen.width;
-        const h = canvasSpecimen.height;
-        ctxS.clearRect(0, 0, w, h);
+    function update3DSpecimen() {
+        if(!scene) return;
 
         const realDeltaL = state.xBase * state.scaleL;
-        const currentP = getPBase(state.xBase) * state.scaleF;
+        const isBroken = state.xBase >= CONSTANTS.MAX_X_BASE;
         
-        const centerX = w / 2 - 20; 
-        const topGripY = h * 0.15;
-        const baseBottomGripY = h * 0.70; 
+        const headL = 60;
+        const transL = 15;
+        const L0 = state.L0;
+        const D_r = 14 / 2;
+        const d_r = state.d / 2;
         
-        const L_total = 20 + 15 + state.L0 + 15 + 20; 
-        const pxPerMmBase = (baseBottomGripY - topGripY) / L_total;
-        
-        const extPx = 20 * pxPerMmBase;    
-        const transPx = 15 * pxPerMmBase;  
-        
-        const topExtY = topGripY + extPx;
-        const topTransY = topExtY + transPx;
-        const baseBotTransY = topTransY + state.L0 * pxPerMmBase;
-        
-        const elongationPx = realDeltaL * pxPerMmBase;
-        const botTransY = baseBotTransY + elongationPx;
-        const botExtY = botTransY + transPx;
-        const bottomGripY = botExtY + extPx;
-
-        const middleLen = botTransY - topTransY;
-        const neckY = topTransY + middleLen * state.breakRatio; 
-
-        const dPx = (state.d / 10) * 26; 
-        const D_px = (14 / 10) * 26; 
-
-        const topDist = neckY - topTransY;
-        const botDist = botTransY - neckY;
-
-        const rulerX = centerX + 65; 
-        drawRuler(ctxS, rulerX, topTransY, baseBotTransY, botTransY, pxPerMmBase);
-
         let neckFactor = 1;
         if (state.xBase > 20) {
             const progress = (state.xBase - 20) / 5;
             neckFactor = 1 - (0.38 * progress); 
         }
         if (neckFactor < 0.62) neckFactor = 0.62;
-        const neckWidth = dPx * neckFactor;
-        const isBroken = state.xBase >= CONSTANTS.MAX_X_BASE;
+        const neck_r = d_r * neckFactor;
+        
+        const flat_diameter = 4.5;
+        const target_flat_r = flat_diameter / 2; 
+        const actual_flat_r = Math.min(target_flat_r, neck_r * 0.8); 
+        const frac_depth = neck_r - actual_flat_r;
+        
+        const topGripY = L0/2 + transL + headL;
+        const topTransStartY = L0/2 + transL;
+        const topTransEndY = L0/2;
+        
+        const botTransStartY = -L0/2 - realDeltaL;
+        const botTransEndY = botTransStartY - transL;
+        const botGripY = botTransEndY - headL;
+        
+        const middleLen = topTransEndY - botTransStartY;
+        const neckY = topTransEndY - middleLen * state.breakRatio;
 
-        const specGrd = ctxS.createLinearGradient(centerX - D_px/2, 0, centerX + D_px/2, 0);
-        specGrd.addColorStop(0, '#475569'); specGrd.addColorStop(0.25, '#cbd5e1');
-        specGrd.addColorStop(0.5, '#94a3b8'); specGrd.addColorStop(0.75, '#f1f5f9');
-        specGrd.addColorStop(1, '#334155');
+        const ptsTopOuter = [];
+        const ptsTopFrac = [];
+        const ptsBotOuter = [];
+        const ptsBotFrac = [];
+        
+        const gaugeSegments = 40;
 
-        ctxS.fillStyle = specGrd; 
-        ctxS.strokeStyle = '#1e293b';
-        ctxS.lineWidth = 1.5;
+        ptsTopOuter.push(new THREE.Vector2(0, topGripY)); 
+        ptsTopOuter.push(new THREE.Vector2(D_r, topGripY));
+        ptsTopOuter.push(new THREE.Vector2(D_r, topTransStartY));
+        for(let i=1; i<=10; i++) {
+            let t = i/10;
+            let r = D_r + (d_r - D_r) * (t*t*(3-2*t)); 
+            ptsTopOuter.push(new THREE.Vector2(r, topTransStartY - t * transL));
+        }
 
         if (!isBroken) {
-            ctxS.beginPath();
-            ctxS.moveTo(centerX - D_px/2, topGripY); ctxS.lineTo(centerX - D_px/2, topExtY);
-            ctxS.bezierCurveTo(centerX - D_px/2, topExtY + transPx/2, centerX - dPx/2, topExtY + transPx/2, centerX - dPx/2, topTransY);
-            ctxS.bezierCurveTo(centerX - dPx/2, topTransY + topDist*0.6, centerX - neckWidth/2, neckY - topDist*0.2, centerX - neckWidth/2, neckY);
-            ctxS.bezierCurveTo(centerX - neckWidth/2, neckY + botDist*0.2, centerX - dPx/2, botTransY - botDist*0.6, centerX - dPx/2, botTransY);
-            ctxS.bezierCurveTo(centerX - dPx/2, botExtY - transPx/2, centerX - D_px/2, botExtY - transPx/2, centerX - D_px/2, botExtY);
-            ctxS.lineTo(centerX - D_px/2, bottomGripY);
-            ctxS.lineTo(centerX + D_px/2, bottomGripY); ctxS.lineTo(centerX + D_px/2, botExtY);
-            ctxS.bezierCurveTo(centerX + D_px/2, botExtY - transPx/2, centerX + dPx/2, botExtY - transPx/2, centerX + dPx/2, botTransY);
-            ctxS.bezierCurveTo(centerX + dPx/2, botTransY - botDist*0.6, centerX + neckWidth/2, neckY + botDist*0.2, centerX + neckWidth/2, neckY);
-            ctxS.bezierCurveTo(centerX + neckWidth/2, neckY - topDist*0.2, centerX + dPx/2, topTransY + topDist*0.6, centerX + dPx/2, topTransY);
-            ctxS.bezierCurveTo(centerX + dPx/2, topExtY + transPx/2, centerX + D_px/2, topExtY + transPx/2, centerX + D_px/2, topExtY);
-            ctxS.lineTo(centerX + D_px/2, topGripY); ctxS.closePath();
-            ctxS.fill(); ctxS.stroke();
+            for(let i=1; i<gaugeSegments; i++) {
+                let t = i/gaugeSegments;
+                let y = topTransEndY - t * middleLen;
+                let r = d_r;
+                let dist = Math.abs(y - neckY);
+                if (dist < 15) { 
+                    let nT = dist / 15;
+                    r = neck_r + (d_r - neck_r) * (nT*nT*(3-2*nT));
+                }
+                ptsTopOuter.push(new THREE.Vector2(r, y));
+            }
+            ptsTopOuter.push(new THREE.Vector2(d_r, botTransStartY));
+            
+            for(let i=1; i<=10; i++) {
+                let t = i/10;
+                let r = d_r + (D_r - d_r) * (t*t*(3-2*t)); 
+                ptsTopOuter.push(new THREE.Vector2(r, botTransStartY - t * transL));
+            }
+            ptsTopOuter.push(new THREE.Vector2(D_r, botTransEndY));
+            ptsTopOuter.push(new THREE.Vector2(D_r, botGripY));
+            ptsTopOuter.push(new THREE.Vector2(0, botGripY));
+            
+            specimenTopOuterMesh.geometry.dispose();
+            specimenTopOuterMesh.geometry = new THREE.LatheGeometry(ptsTopOuter, 32);
+            
+            specimenTopFracMesh.visible = false;
+            specimenBotOuterMesh.visible = false;
+            specimenBotFracMesh.visible = false;
+            
         } else {
-            const gap = 18; 
-            const offset45 = neckWidth / 2;
+            specimenTopFracMesh.visible = true;
+            specimenBotOuterMesh.visible = true;
+            specimenBotFracMesh.visible = true;
+            
+            const gap = 12;
+            const breakYTop = neckY + gap/2;
+            const breakYBot = neckY - gap/2;
 
-            ctxS.beginPath();
-            ctxS.moveTo(centerX - D_px/2, topGripY); ctxS.lineTo(centerX - D_px/2, topExtY);
-            ctxS.bezierCurveTo(centerX - D_px/2, topExtY + transPx/2, centerX - dPx/2, topExtY + transPx/2, centerX - dPx/2, topTransY);
-            ctxS.bezierCurveTo(centerX - dPx/2, topTransY + topDist*0.5, centerX - neckWidth/2, neckY - gap/2 - offset45, centerX - neckWidth/2, neckY - gap/2);
-            ctxS.lineTo(centerX + neckWidth/2, (neckY - gap/2) - offset45);
-            ctxS.bezierCurveTo(centerX + neckWidth/2, neckY - gap/2 - offset45, centerX + dPx/2, topTransY + topDist*0.5, centerX + dPx/2, topTransY);
-            ctxS.bezierCurveTo(centerX + dPx/2, topExtY + transPx/2, centerX + D_px/2, topExtY + transPx/2, centerX + D_px/2, topExtY);
-            ctxS.lineTo(centerX + D_px/2, topGripY); ctxS.closePath();
-            ctxS.fill(); ctxS.stroke();
-
-            ctxS.beginPath();
-            ctxS.moveTo(centerX - D_px/2, bottomGripY); ctxS.lineTo(centerX - D_px/2, botExtY);
-            ctxS.bezierCurveTo(centerX - D_px/2, botExtY - transPx/2, centerX - dPx/2, botExtY - transPx/2, centerX - dPx/2, botTransY);
-            ctxS.bezierCurveTo(centerX - dPx/2, botTransY - botDist*0.5, centerX - neckWidth/2, neckY + gap/2 + offset45, centerX - neckWidth/2, (neckY + gap/2) + offset45);
-            ctxS.lineTo(centerX + neckWidth/2, neckY + gap/2);
-            ctxS.bezierCurveTo(centerX + neckWidth/2, neckY + gap/2, centerX + dPx/2, botTransY - botDist*0.5, centerX + dPx/2, botTransY);
-            ctxS.bezierCurveTo(centerX + dPx/2, botExtY - transPx/2, centerX + D_px/2, botExtY - transPx/2, centerX + D_px/2, botExtY);
-            ctxS.lineTo(centerX + D_px/2, bottomGripY); ctxS.closePath();
-            ctxS.fill(); ctxS.stroke();
+            for(let i=1; i<gaugeSegments; i++) {
+                let t = i/gaugeSegments;
+                let y = topTransEndY - t * middleLen;
+                if (y < breakYTop) break;
+                let r = d_r;
+                let dist = Math.abs(y - neckY);
+                if (dist < 15) r = neck_r + (d_r - neck_r) * Math.pow(dist/15, 2);
+                ptsTopOuter.push(new THREE.Vector2(r, y));
+            }
+            ptsTopOuter.push(new THREE.Vector2(neck_r, breakYTop)); 
+            
+            ptsTopFrac.push(new THREE.Vector2(0, breakYTop - frac_depth));               
+            ptsTopFrac.push(new THREE.Vector2(actual_flat_r, breakYTop - frac_depth));   
+            ptsTopFrac.push(new THREE.Vector2(neck_r, breakYTop));                       
+            
+            ptsBotFrac.push(new THREE.Vector2(0, breakYBot - frac_depth));               
+            ptsBotFrac.push(new THREE.Vector2(actual_flat_r, breakYBot - frac_depth));   
+            ptsBotFrac.push(new THREE.Vector2(neck_r, breakYBot));                       
+            
+            ptsBotOuter.push(new THREE.Vector2(neck_r, breakYBot)); 
+            for(let i=1; i<gaugeSegments; i++) {
+                let t = i/gaugeSegments;
+                let y = topTransEndY - t * middleLen;
+                if (y > breakYBot) continue;
+                let r = d_r;
+                let dist = Math.abs(y - neckY);
+                if (dist < 15) r = neck_r + (d_r - neck_r) * Math.pow(dist/15, 2);
+                ptsBotOuter.push(new THREE.Vector2(r, y));
+            }
+            ptsBotOuter.push(new THREE.Vector2(d_r, botTransStartY));
+            
+            for(let i=1; i<=10; i++) {
+                let t = i/10;
+                let r = d_r + (D_r - d_r) * (t*t*(3-2*t)); 
+                ptsBotOuter.push(new THREE.Vector2(r, botTransStartY - t * transL));
+            }
+            ptsBotOuter.push(new THREE.Vector2(D_r, botTransEndY));
+            ptsBotOuter.push(new THREE.Vector2(D_r, botGripY));
+            ptsBotOuter.push(new THREE.Vector2(0, botGripY));
+            
+            specimenTopOuterMesh.geometry.dispose();
+            specimenTopOuterMesh.geometry = new THREE.LatheGeometry(ptsTopOuter, 32);
+            
+            specimenTopFracMesh.geometry.dispose();
+            specimenTopFracMesh.geometry = new THREE.LatheGeometry(ptsTopFrac, 32);
+            
+            specimenBotOuterMesh.geometry.dispose();
+            specimenBotOuterMesh.geometry = new THREE.LatheGeometry(ptsBotOuter, 32);
+            
+            specimenBotFracMesh.geometry.dispose();
+            specimenBotFracMesh.geometry = new THREE.LatheGeometry(ptsBotFrac, 32);
         }
 
-        draw3DGrip(ctxS, centerX, topGripY, true);
-        draw3DGrip(ctxS, centerX, bottomGripY, false);
+        specimenTopOuterMesh.position.x = state.specimenOffsetX;
+        specimenTopFracMesh.position.x = state.specimenOffsetX;
+        specimenBotOuterMesh.position.x = state.specimenOffsetX;
+        specimenBotFracMesh.position.x = state.specimenOffsetX;
+
+        topGripGroup.position.y = topGripY - 40;
+        botGripGroup.position.y = botGripY + 40;
+        
+        specData3D = {
+            topGripY, topTransEndY, botTransStartY, botGripY, neckY,
+            isBroken, neck_r, d_r, D_r, realDeltaL,
+            actual_flat_r, frac_depth
+        };
+    }
+
+    function getProjectedPos(x, y, z) {
+        if(!camera || !canvasSpecimen) return {x:0, y:0};
+        const vec = new THREE.Vector3(x, y, z);
+        vec.project(camera);
+        // Sử dụng logic clientWidth/clientHeight cho không gian tỷ lệ (Fix High-DPI)
+        const w = canvasSpecimen.clientWidth || canvasSpecimen.width;
+        const h = canvasSpecimen.clientHeight || canvasSpecimen.height;
+        return {
+            x: (vec.x * 0.5 + 0.5) * w,
+            y: (-vec.y * 0.5 + 0.5) * h
+        };
+    }
+
+    function drawOverlay2D() {
+        if(!canvasSpecimen || !ctxS) return;
+        const w = canvasSpecimen.clientWidth || canvasSpecimen.width;
+        const h = canvasSpecimen.clientHeight || canvasSpecimen.height;
+        if (w === 0 || h === 0) return;
+        ctxS.clearRect(0, 0, w, h);
+        
+        if (!specData3D || state.xBase === undefined) return;
+
+        const offX = state.specimenOffsetX;
+        
+        const midYBefore = specData3D.topTransEndY - state.L0 * 0.25; 
+        const breakYBot = specData3D.neckY - 6; 
+        const midYAfter = specData3D.botTransStartY + (breakYBot - specData3D.botTransStartY) * 0.25;
+
+        const pMidLabel = getProjectedPos(offX, midYBefore, 0);
+        const pBotMidLabel = getProjectedPos(offX, midYAfter, 0);
+        const pFracLabel = getProjectedPos(offX, breakYBot, 0);
+        
+        const specProjX = getProjectedPos(offX, 0, 0).x;
+        let textXLabel, isTextLeft;
+
+        if (specProjX < 120) {
+            textXLabel = specProjX + 110;
+            ctxS.textAlign = "left";
+            isTextLeft = false;
+        } else {
+            textXLabel = specProjX - 60;
+            ctxS.textAlign = "right";
+            isTextLeft = true;
+        }
 
         ctxS.font = "bold 13px Arial";
-        ctxS.textAlign = "right"; 
-        const textXLeft = centerX - D_px/2 - 20;
-        
-        // CHỈ HIỆN KÍCH THƯỚC ĐẦU NẾU ĐÃ BẤM ĐO LẦN 1
-        if (state.xBase === 0 && state.isMeasuredBefore) {
-            const yTopExt = topGripY + extPx/2;
-            ctxS.fillStyle = '#1e293b';
-            ctxS.fillText(`D = 14 mm`, textXLeft, yTopExt);
-            drawLeaderLine(ctxS, textXLeft, yTopExt, centerX - D_px/2, yTopExt, '#1e293b', true);
 
-            const yTopLabel = topTransY + 20;
-            ctxS.fillStyle = '#1e3a8a';
-            ctxS.fillText(`d₀ = ${state.d.toFixed(2)} mm`, textXLeft, yTopLabel);
-            drawLeaderLine(ctxS, textXLeft, yTopLabel, centerX - dPx/2, yTopLabel, '#1e3a8a', true);
+        if (state.xBase === 0 && state.isMeasuredBefore) {
+            ctxS.fillStyle = '#93c5fd'; 
+            ctxS.fillText(`d₀ = ${state.d.toFixed(2)} mm`, textXLabel, pMidLabel.y);
+            const targetX = getProjectedPos(offX + (isTextLeft ? -specData3D.d_r : specData3D.d_r), midYBefore, 0).x;
+            drawLeaderLine(ctxS, textXLabel, pMidLabel.y, targetX, pMidLabel.y, '#93c5fd', isTextLeft);
         }
 
-        // CHỈ HIỆN KÍCH THƯỚC ĐỨT NẾU ĐÃ BẤM ĐO LẦN 2
-        if (isBroken && state.isMeasuredAfter) {
+        if (specData3D.isBroken && state.isMeasuredAfter && state.isUnclamped) {
             const d1_val = state.d * 0.911;
-            const yBotLabel = botTransY - 20;
-            ctxS.fillStyle = '#d97706';
-            ctxS.fillText(`d₁ = ${d1_val.toFixed(2)} mm`, textXLeft, yBotLabel);
-            drawLeaderLine(ctxS, textXLeft, yBotLabel, centerX - dPx/2, yBotLabel, '#d97706', true);
+            ctxS.fillStyle = '#fbbf24'; 
+            ctxS.fillText(`d₁ = ${d1_val.toFixed(2)} mm`, textXLabel, pBotMidLabel.y);
+            const tgX1 = getProjectedPos(offX + (isTextLeft ? -specData3D.d_r : specData3D.d_r), midYAfter, 0).x;
+            drawLeaderLine(ctxS, textXLabel, pBotMidLabel.y, tgX1, pBotMidLabel.y, '#fbbf24', isTextLeft);
 
             const dph_val = state.d * 0.62;
-            const yNeckLabel = neckY - 25; 
-            ctxS.fillStyle = '#dc2626';
-            ctxS.fillText(`d_ph = ${dph_val.toFixed(2)} mm`, textXLeft, yNeckLabel);
-            drawLeaderLine(ctxS, textXLeft, yNeckLabel, centerX - neckWidth/2, yNeckLabel, '#dc2626', true);
+            const dph_textY = pFracLabel.y + 35; 
+            ctxS.fillStyle = '#f87171'; 
+            ctxS.fillText(`d_ph = ${dph_val.toFixed(2)} mm`, textXLabel, dph_textY);
             
-            // --- THÊM VẼ GÓC ĐỨT GÃY 45 ĐỘ ---
-            const offset45 = neckWidth / 2;
-            const arcCenterX = centerX + neckWidth/2; 
-            const arcCenterY = neckY + 9; // gap/2 = 9
-
-            // Vẽ đường chuẩn nằm ngang
+            const tgX2 = getProjectedPos(offX + (isTextLeft ? -specData3D.neck_r : specData3D.neck_r), breakYBot, 0).x;
+            
             ctxS.beginPath();
-            ctxS.moveTo(arcCenterX, arcCenterY);
-            ctxS.lineTo(arcCenterX - 45, arcCenterY);
-            ctxS.strokeStyle = '#9333ea'; // Màu tím phân biệt rõ ràng
-            ctxS.lineWidth = 1.2;
+            if (isTextLeft) {
+                ctxS.moveTo(textXLabel + 5, dph_textY - 4);
+                ctxS.lineTo(textXLabel + 30, dph_textY - 4);
+                ctxS.lineTo(tgX2, pFracLabel.y);
+            } else {
+                ctxS.moveTo(textXLabel, dph_textY - 4);
+                ctxS.lineTo(textXLabel - 25, dph_textY - 4);
+                ctxS.lineTo(tgX2, pFracLabel.y);
+            }
+            ctxS.strokeStyle = '#f87171';
+            ctxS.lineWidth = 1.5;
+            ctxS.stroke();
+            
+            ctxS.beginPath(); 
+            ctxS.arc(tgX2, pFracLabel.y, 2.5, 0, Math.PI*2); 
+            ctxS.fillStyle = '#f87171'; 
+            ctxS.fill();
+            
+            const pOuter = getProjectedPos(offX + specData3D.neck_r, breakYBot, 0);
+            const pInner = getProjectedPos(offX + specData3D.actual_flat_r, breakYBot - specData3D.frac_depth, 0);
+            
+            const dx = pOuter.x - pInner.x;
+            const dy = pOuter.y - pInner.y;
+            
+            const extFactor = 2.5; 
+            const extX = pOuter.x + dx * extFactor;
+            const extY = pOuter.y + dy * extFactor;
+
+            ctxS.beginPath();
+            ctxS.moveTo(pInner.x, pInner.y);
+            ctxS.lineTo(extX, extY);
+            ctxS.strokeStyle = '#c084fc';
+            ctxS.lineWidth = 1.5;
             ctxS.stroke();
 
-            // Vẽ đường kéo dài dọc theo mặt cắt để rõ góc độ hơn
-            const angleRad = Math.atan2(offset45, -neckWidth); // Góc nghiêng của mặt nứt dẻo
             ctxS.beginPath();
-            ctxS.moveTo(arcCenterX, arcCenterY);
-            ctxS.lineTo(arcCenterX + 45 * Math.cos(angleRad), arcCenterY + 35 * Math.sin(angleRad));
+            ctxS.moveTo(pOuter.x, pOuter.y);
+            const horizLen = isTextLeft ? 50 : 60; 
+            ctxS.lineTo(pOuter.x + horizLen, pOuter.y);
             ctxS.setLineDash([3, 3]);
             ctxS.stroke();
             ctxS.setLineDash([]);
 
-            // Vẽ cung tròn góc
-            const startA = Math.PI; 
-            const endA = angleRad; 
+            const angleRad = Math.atan2(extY - pOuter.y, extX - pOuter.x);
             ctxS.beginPath();
-            ctxS.arc(arcCenterX, arcCenterY, 28, startA, endA, true); // true: ngược chiều kim đồng hồ
+            ctxS.arc(pOuter.x, pOuter.y, 25, angleRad, 0, false);
             ctxS.stroke();
 
-            // Ghi chữ text "45°"
-            ctxS.fillStyle = '#9333ea';
-            ctxS.font = "bold 14px Arial";
-            ctxS.textAlign = "center";
-            ctxS.fillText("45°", arcCenterX - 38, arcCenterY + 28);
+            ctxS.fillStyle = '#c084fc'; 
+            ctxS.textAlign = "left";
+            ctxS.fillText("45°", pOuter.x + 30, pOuter.y - 12);
         }
 
-        if (currentP > 0 && !isBroken) {
-            ctxS.fillStyle = '#ef4444';
-            drawArrow(ctxS, centerX, topGripY - 70, centerX, topGripY - 105);
-            drawArrow(ctxS, centerX, bottomGripY + 70, centerX, bottomGripY + 105);
+        const rX = offX + 25; 
+        const pRTop = getProjectedPos(rX, specData3D.topTransEndY, 0);
+        const pRBotBase = getProjectedPos(rX, specData3D.topTransEndY - state.L0, 0);
+        const pRBotCurr = getProjectedPos(rX, specData3D.botTransStartY, 0);
+        
+        const edgeTopX = getProjectedPos(offX + specData3D.d_r, specData3D.topTransEndY, 0).x;
+        const edgeBotBaseX = getProjectedPos(offX + specData3D.d_r, specData3D.topTransEndY - state.L0, 0).x;
 
-            ctxS.textAlign = "left"; ctxS.font = "bold 16px Arial";
-            ctxS.fillText("P", centerX + 15, topGripY - 85); ctxS.fillText("P", centerX + 15, bottomGripY + 90);
+        const pxPerMm = (pRBotBase.y - pRTop.y) / state.L0;
+        
+        ctxS.strokeStyle = '#cbd5e1'; ctxS.lineWidth = 1;
+        ctxS.beginPath(); 
+        ctxS.moveTo(pRTop.x, pRTop.y - 10); 
+        ctxS.lineTo(pRTop.x, pRBotBase.y + 35 * pxPerMm); 
+        ctxS.stroke();
+        
+        ctxS.beginPath();
+        ctxS.strokeStyle = '#64748b';
+        ctxS.lineWidth = 1;
+        for(let i = 0; i <= 35; i++) {
+            let tickY = pRBotBase.y + i * pxPerMm;
+            let tickLen = (i % 5 === 0) ? 8 : 4;
+            ctxS.moveTo(pRTop.x, tickY);
+            ctxS.lineTo(pRTop.x + tickLen, tickY);
+        }
+        ctxS.stroke();
+
+        ctxS.fillStyle = '#94a3b8';
+        ctxS.textAlign = "left";
+        ctxS.font = "10px Arial";
+        for(let i = 0; i <= 30; i += 10) {
+            let tickY = pRBotBase.y + i * pxPerMm;
+            ctxS.fillText(i.toString(), pRTop.x + 12, tickY + 3);
+        }
+        
+        ctxS.lineWidth = 2; ctxS.strokeStyle = '#60a5fa';
+        ctxS.beginPath(); ctxS.moveTo(edgeTopX, pRTop.y); ctxS.lineTo(pRTop.x + 12, pRTop.y); ctxS.stroke();
+        ctxS.beginPath(); ctxS.moveTo(edgeBotBaseX, pRBotBase.y); ctxS.lineTo(pRBotBase.x + 12, pRBotBase.y); ctxS.stroke();
+        
+        ctxS.fillStyle = '#60a5fa'; ctxS.textAlign = "left"; ctxS.font = "bold 11px Arial";
+        let l0Text = state.isMeasuredBefore ? `L₀ = ${state.L0.toFixed(1)} mm` : "L₀";
+        ctxS.fillText(l0Text, pRTop.x + 16, (pRTop.y + pRBotBase.y)/2);
+
+        if (state.xBase > 0) {
+            const edgeBotCurrX = getProjectedPos(offX + specData3D.d_r, specData3D.botTransStartY, 0).x;
             
-            const geometricMidY = topGripY + (bottomGripY - topGripY)/2;
-            ctxS.fillStyle = 'rgba(255,255,255,0.9)'; ctxS.strokeStyle = '#2563eb';
-            ctxS.fillRect(10, geometricMidY - 20, 115, 35); ctxS.strokeRect(10, geometricMidY - 20, 115, 35);
-            ctxS.fillStyle = '#000'; ctxS.font = "bold 13px Arial";
-            ctxS.fillText(`P = ${currentP.toFixed(0)} N`, 16, geometricMidY + 2);
+            ctxS.strokeStyle = '#f87171'; ctxS.lineWidth = 1;
+            ctxS.beginPath(); ctxS.moveTo(edgeBotCurrX, pRBotCurr.y); ctxS.lineTo(pRBotCurr.x - 2, pRBotCurr.y); ctxS.stroke();
+
+            ctxS.fillStyle = '#f87171'; ctxS.beginPath();
+            ctxS.moveTo(pRBotCurr.x - 2, pRBotCurr.y); ctxS.lineTo(pRBotCurr.x - 14, pRBotCurr.y - 5); ctxS.lineTo(pRBotCurr.x - 14, pRBotCurr.y + 5); ctxS.fill();
+            
+            ctxS.textAlign = "center";
+            ctxS.fillText("ΔL", pRBotCurr.x - 14, pRBotCurr.y + 20);
         }
-    }
-
-    function drawRuler(ctx, x, topY, baseY, currentY, pxPerMm) {
-        ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(x, topY - 10); ctx.lineTo(x, Math.max(currentY + 30, baseY + 65)); ctx.stroke();
-
-        ctx.beginPath(); ctx.moveTo(x - 5, topY); ctx.lineTo(x + 12, topY);
-        ctx.moveTo(x - 5, baseY); ctx.lineTo(x + 12, baseY);
-        ctx.lineWidth = 2; ctx.strokeStyle = '#2563eb'; ctx.stroke();
-        ctx.fillStyle = '#2563eb'; ctx.textAlign = "left"; ctx.font = "bold 11px Arial"; ctx.fillText("Vạch L0", x + 16, (topY + baseY)/2 + 4);
-
-        ctx.lineWidth = 1; ctx.strokeStyle = '#4b5563'; ctx.fillStyle = '#000'; ctx.font = "10px Arial";
-        for(let i = 0; i <= 35; i+=5) {
-            let y = baseY + (i * pxPerMm);
-            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 8, y); ctx.stroke();
-            if (i % 10 === 0 || i === 0) ctx.fillText(i, x + 13, y + 3);
-        }
-
-        ctx.fillStyle = '#ef4444'; ctx.beginPath();
-        ctx.moveTo(x - 2, currentY); ctx.lineTo(x - 14, currentY - 5); ctx.lineTo(x - 14, currentY + 5); ctx.fill();
-        ctx.font = "bold 11px Arial"; ctx.fillText("ΔL", x - 34, currentY + 4);
-    }
-
-    function drawArrow(ctx, fromx, fromy, tox, toy) {
-        var headlen = 10; var dx = tox - fromx; var dy = toy - fromy;
-        var angle = Math.atan2(dy, dx);
-        ctx.beginPath(); ctx.lineWidth = 2.5;
-        ctx.moveTo(fromx, fromy); ctx.lineTo(tox, toy);
-        ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
-        ctx.moveTo(tox, toy);
-        ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
-        ctx.stroke();
     }
 
     function drawGraphCanvas() {
-        const w = canvasGraph.width; const h = canvasGraph.height;
+        if(!canvasGraph || !ctxG) return;
+        const w = canvasGraph.clientWidth || canvasGraph.width; 
+        const h = canvasGraph.clientHeight || canvasGraph.height;
+        if (w === 0 || h === 0) return;
         ctxG.clearRect(0, 0, w, h);
 
-        const padLeft = 75; const padBottom = 60; const padTop = 30; const padRight = 50; 
+        const padLeft = 75; const padBottom = 40; const padTop = 30; const padRight = 50; 
         const graphW = w - padLeft - padRight; const graphH = h - padBottom - padTop;
         const maxRealX = 0.3 * state.L0;
         const maxScaleY = state.yAxisMax;
@@ -484,24 +1261,30 @@
         const mapX = (realX) => padLeft + (realX / maxRealX) * graphW;
         const mapY = (y) => h - padBottom - (y / maxScaleY) * graphH;
 
+        const overlay = document.querySelector('.annotations-overlay');
+        if (overlay) {
+            overlay.style.left = `${mapX(13) + 10}px`;
+            overlay.style.bottom = `${h - mapY(500)}px`;
+            overlay.style.right = 'auto';
+        }
+
         ctxG.strokeStyle = '#f1f5f9'; ctxG.lineWidth = 1; ctxG.beginPath();
-        for(let i = 0; i <= maxRealX; i+=5) { ctxG.moveTo(mapX(i), padTop); ctxG.lineTo(mapX(i), h - padBottom); }
+        for(let i = 0; i <= maxRealX; i+=2) { ctxG.moveTo(mapX(i), padTop); ctxG.lineTo(mapX(i), h - padBottom); }
         for(let yVal = 0; yVal <= state.yAxisMax; yVal += 10000) { ctxG.moveTo(padLeft, mapY(yVal)); ctxG.lineTo(padLeft + graphW, mapY(yVal)); }
         ctxG.stroke();
 
         ctxG.strokeStyle = '#334155'; ctxG.lineWidth = 2; ctxG.beginPath();
-        drawArrow(ctxG, padLeft, h - padBottom, w - 20, h - padBottom); 
-        drawArrow(ctxG, padLeft, h - padBottom, padLeft, padTop - 20); 
+        drawArrow(ctxG, padLeft, h - padBottom, w - 20, h - padBottom, '#334155'); 
+        drawArrow(ctxG, padLeft, h - padBottom, padLeft, padTop - 20, '#334155'); 
         
         ctxG.fillStyle = '#1e293b'; ctxG.font = "bold 13px Arial"; ctxG.textAlign = "center";
-        ctxG.fillText("Biến dạng dài ΔL (mm)", padLeft + graphW / 2, h - 15);
+        ctxG.fillText("Biến dạng dài ΔL (mm)", padLeft + graphW / 2, h - 10);
         
         ctxG.save(); ctxG.translate(22, padTop + graphH / 2); ctxG.rotate(-Math.PI / 2);
         ctxG.fillText("Lực kéo dọc P (N)", 0, 0); ctxG.restore();
 
         ctxG.font = "11px Arial"; ctxG.textAlign = "center";
-        for(let i = 0; i <= maxRealX; i+=5) { ctxG.fillText(i.toFixed(0), mapX(i), h - padBottom + 16); }
-        
+        for(let i = 0; i <= maxRealX; i+=2) { ctxG.fillText(i.toFixed(0), mapX(i), h - padBottom + 16); }
         ctxG.textAlign = "right";
         for(let yVal = 0; yVal <= state.yAxisMax; yVal += 10000) { ctxG.fillText(yVal, padLeft - 8, mapY(yVal) + 4); }
 
@@ -515,7 +1298,6 @@
             if (points.length === 0 || points[points.length - 1] < state.xBase) points.push(state.xBase);
 
             ctxG.beginPath(); ctxG.moveTo(mapX(0), mapY(0));
-            
             for (let i = 1; i < points.length; i++) {
                 let xB = points[i]; let pB = getPBase(xB);
                 let realX = xB * state.scaleL; let realY = pB * state.scaleF;
@@ -526,10 +1308,7 @@
                 else ctxG.strokeStyle = '#dc2626';                 
 
                 ctxG.lineTo(mapX(realX), mapY(realY)); ctxG.stroke();
-                
-                if (i < points.length - 1) {
-                    ctxG.beginPath(); ctxG.moveTo(mapX(realX), mapY(realY));
-                }
+                if (i < points.length - 1) { ctxG.beginPath(); ctxG.moveTo(mapX(realX), mapY(realY)); }
             }
             
             if (state.xBase < CONSTANTS.MAX_X_BASE) {
@@ -542,14 +1321,26 @@
                 ctxG.stroke();
             }
 
+            ctxG.fillStyle = '#dc2626';
+            ctxG.font = 'italic bold 16px Arial';
+            ctxG.textAlign = 'right';
+            ctxG.fillText("P", mapX(currX) - 12, mapY(currY) - 12);
+
             let px = mapX(currX); let py = mapY(currY);
-            let boxW = 85; let boxH = 40; let offsetX = 12; let offsetY = -10;
+            let boxW = 85; let boxH = 40; let offsetX = 20; let offsetY = -20;
 
             if (px + offsetX + boxW > padLeft + graphW + 10) offsetX = -boxW - 12; 
-            if (py + offsetY < padTop) offsetY = 12; 
+            if (py + offsetY < padTop) offsetY = 20; 
             if (py + offsetY + boxH > h - padBottom) offsetY = -boxH - 12;
 
             let tX = px + offsetX; let tY = py + offsetY;
+
+            ctxG.beginPath();
+            ctxG.moveTo(px, py);
+            ctxG.lineTo(tX, tY + boxH/2);
+            ctxG.strokeStyle = '#cbd5e1';
+            ctxG.lineWidth = 1.5;
+            ctxG.stroke();
 
             ctxG.fillStyle = 'rgba(255, 255, 255, 0.92)'; ctxG.strokeStyle = '#94a3b8'; ctxG.lineWidth = 1;
             ctxG.beginPath();
@@ -561,153 +1352,876 @@
             ctxG.fillStyle = '#2563eb'; ctxG.fillText(`ΔL: ${currX.toFixed(2)} mm`, tX + 6, tY + 31);
         }
 
-        updateAnnotations();
-    }
-
-    function updateAnnotations() {
-        const x = state.xBase;
-        if (x > 0.1) annotations[0].classList.add('show'); else annotations[0].classList.remove('show');
-        if (x > 0.5) annotations[1].classList.add('show'); else annotations[1].classList.remove('show');
-        if (x > 4.5) annotations[2].classList.add('show'); else annotations[2].classList.remove('show');
-        if (x > 20) annotations[3].classList.add('show'); else annotations[3].classList.remove('show');
-    }
-
-    function drawAll() {
-        const realDeltaL = state.xBase * state.scaleL;
-        const currentP = getPBase(state.xBase) * state.scaleF;
-
-        if (currentP > 40000 && state.yAxisMax === 40000) state.yAxisMax = 50000;
-
-        drawSpecimenCanvas();
-        drawGraphCanvas();
-        
-        valP.textContent = Math.round(currentP);
-        valdL.textContent = realDeltaL.toFixed(2);
-    }
-
-    function animate() {
-        if (!state.isRunning) return;
-
-        let dx_per_frame;
-        if (state.xBase <= 0.46) dx_per_frame = (state.forceSpeed / 1000) * 0.000766; 
-        else dx_per_frame = (state.forceSpeed / 150000); 
-
-        state.xBase += dx_per_frame;
-
-        if (state.xBase >= CONSTANTS.MAX_X_BASE) {
-            state.xBase = CONSTANTS.MAX_X_BASE;
-            state.isRunning = false;
-            state.isFinished = true;
-            btnStart.disabled = true;
-            btnPause.disabled = true;
+        if (state.isFinished) {
+            const startX = mapX(2); 
+            const startY = mapY(16000); 
+            const tableW = 165;
+            const tableH = 115;
             
-            // Hiện nút đo sau khi kéo đứt
-            btnMeasureAfter.disabled = false;
-            btnMeasureAfter.classList.remove('opacity-50', 'cursor-not-allowed');
+            const p_tl = 25000 * state.scaleF;
+            const p_ch = 25600 * state.scaleF;
+            const p_b = 38000 * state.scaleF;
+            const p_ph = 26200 * state.scaleF;
 
-            drawAll(); 
+            ctxG.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctxG.strokeStyle = '#94a3b8';
+            ctxG.lineWidth = 1.5;
+            
+            if (ctxG.roundRect) {
+                ctxG.beginPath();
+                ctxG.roundRect(startX, startY, tableW, tableH, 6);
+                ctxG.fill();
+                ctxG.stroke();
+            } else {
+                ctxG.fillRect(startX, startY, tableW, tableH);
+                ctxG.strokeRect(startX, startY, tableW, tableH);
+            }
+
+            ctxG.fillStyle = '#1e3a8a';
+            ctxG.font = 'bold 12px Arial';
+            ctxG.textAlign = 'center';
+            ctxG.fillText("BẢNG KẾT QUẢ LỰC", startX + tableW/2, startY + 22);
+            
+            ctxG.beginPath();
+            ctxG.moveTo(startX + 15, startY + 32);
+            ctxG.lineTo(startX + tableW - 15, startY + 32);
+            ctxG.strokeStyle = '#cbd5e1';
+            ctxG.lineWidth = 1;
+            ctxG.stroke();
+
+            const drawTextWithSubscript = (mainLabel, subLabel, descLabel, x, y) => {
+                ctxG.textAlign = 'left';
+                ctxG.font = '12px Arial';
+                ctxG.fillText(mainLabel, x, y);
+                let w1 = ctxG.measureText(mainLabel).width;
+                
+                ctxG.font = '10px Arial';
+                ctxG.fillText(subLabel, x + w1, y + 4);
+                let w2 = ctxG.measureText(subLabel).width;
+                
+                ctxG.font = '12px Arial';
+                ctxG.fillText(" " + descLabel, x + w1 + w2, y);
+            };
+
+            ctxG.fillStyle = '#334155';
+            drawTextWithSubscript("P", "tl", "(Tỉ lệ):", startX + 15, startY + 52);
+            drawTextWithSubscript("P", "ch", "(Chảy):", startX + 15, startY + 70);
+            drawTextWithSubscript("P", "b", "(Bền):", startX + 15, startY + 88);
+            drawTextWithSubscript("P", "ph", "(Phá hủy):", startX + 15, startY + 106);
+
+            ctxG.textAlign = 'right';
+            ctxG.font = 'bold 12px Arial';
+            ctxG.fillStyle = '#2563eb';
+            ctxG.fillText(`${p_tl.toFixed(0)} N`, startX + tableW - 15, startY + 52);
+            ctxG.fillStyle = '#d97706';
+            ctxG.fillText(`${p_ch.toFixed(0)} N`, startX + tableW - 15, startY + 70);
+            ctxG.fillStyle = '#16a34a';
+            ctxG.fillText(`${p_b.toFixed(0)} N`, startX + tableW - 15, startY + 88);
+            ctxG.fillStyle = '#dc2626';
+            ctxG.fillText(`${p_ph.toFixed(0)} N`, startX + tableW - 15, startY + 106);
+        }
+
+        if (typeof annotations !== 'undefined') {
+            const x = state.xBase;
+            if (x > 0.1 && annotations[0]) annotations[0].classList.add('show'); else if (annotations[0]) annotations[0].classList.remove('show');
+            if (x > 0.5 && annotations[1]) annotations[1].classList.add('show'); else if (annotations[1]) annotations[1].classList.remove('show');
+            if (x > 4.5 && annotations[2]) annotations[2].classList.add('show'); else if (annotations[2]) annotations[2].classList.remove('show');
+            if (x > 20 && annotations[3]) annotations[3].classList.add('show'); else if (annotations[3]) annotations[3].classList.remove('show');
+        }
+    }
+
+    function drawStressStrainGraph() {
+        const canvas = getEl('canvasStressStrain');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const w = canvas.clientWidth || canvas.width; 
+        const h = canvas.clientHeight || canvas.height;
+        if (w === 0 || h === 0) return;
+        ctx.clearRect(0, 0, w, h);
+
+        if (!state.isStressStrainUnlocked) {
+            ctx.fillStyle = '#1e293b'; 
+            ctx.fillRect(0, 0, w, h);
+            
+            ctx.fillStyle = '#64748b';
+            ctx.font = 'italic 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Tính toán ĐÚNG các đặc trưng cơ học ở bảng số 3', w/2, h/2 - 10);
+            ctx.fillText('để tự động mở khóa Đồ thị Ứng suất - Biến dạng', w/2, h/2 + 10);
             return;
         }
 
-        drawAll();
-        animationFrameId = requestAnimationFrame(animate);
+        const padLeft = 50; const padBottom = 35; const padTop = 15; 
+        const padRight = 15; 
+        const graphW = w - padLeft - padRight; const graphH = h - padBottom - padTop;
+        const maxStrain = 30; // 30%
+        const maxStress = 1000; // MPa
+
+        const mapX = (strain) => padLeft + (strain / maxStrain) * graphW;
+        const mapY = (stress) => h - padBottom - (stress / maxStress) * graphH;
+
+        ctx.strokeStyle = '#334155'; ctx.lineWidth = 1; ctx.beginPath();
+        for(let i = 0; i <= maxStrain; i+=5) { ctx.moveTo(mapX(i), padTop); ctx.lineTo(mapX(i), h - padBottom); }
+        for(let yVal = 0; yVal <= maxStress; yVal += 200) { ctx.moveTo(padLeft, mapY(yVal)); ctx.lineTo(padLeft + graphW, mapY(yVal)); }
+        ctx.stroke();
+
+        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2; ctx.beginPath();
+        drawArrow(ctx, padLeft, h - padBottom, w - 5, h - padBottom, '#cbd5e1'); 
+        drawArrow(ctx, padLeft, h - padBottom, padLeft, padTop - 10, '#cbd5e1'); 
+        
+        ctx.fillStyle = '#cbd5e1'; ctx.font = "bold 11px Arial"; ctx.textAlign = "center";
+        ctx.fillText("Biến dạng tỉ đối ε (%)", padLeft + graphW / 2, h - 5);
+        
+        ctx.save(); ctx.translate(15, padTop + graphH / 2); ctx.rotate(-Math.PI / 2);
+        ctx.fillText("Ứng suất thực σ (MPa)", 0, 0); ctx.restore();
+
+        ctx.font = "10px Arial"; ctx.textAlign = "center";
+        for(let i = 0; i <= maxStrain; i+=5) { ctx.fillText(i.toString(), mapX(i), h - padBottom + 14); }
+        ctx.textAlign = "right";
+        for(let yVal = 0; yVal <= maxStress; yVal += 200) { ctx.fillText(yVal.toString(), padLeft - 8, mapY(yVal) + 4); }
+
+        if (state.xBase > 0) {
+            ctx.lineWidth = 2.5;
+            let step = 0.04; let points = [];
+            for (let xB = 0; xB <= state.xBase; xB += step) points.push(xB);
+            if (points.length === 0 || points[points.length - 1] < state.xBase) points.push(state.xBase);
+
+            const F0 = (Math.PI * Math.pow(state.d, 2)) / 4;
+            const F_ph = (Math.PI * Math.pow(state.d * 0.62, 2)) / 4;
+            const P_b = 38000 * state.scaleF;
+            const sigma_b = P_b / F0;
+            const P_ph = 26200 * state.scaleF;
+            const sigma_ph = P_ph / F_ph;
+
+            ctx.beginPath(); ctx.moveTo(mapX(0), mapY(0));
+            for (let i = 1; i < points.length; i++) {
+                let xB = points[i]; 
+                let pB = getPBase(xB) * state.scaleF;
+                
+                let strain = (xB * state.scaleL / state.L0) * 100; // %
+                let stress;
+
+                if (xB <= 20) {
+                    stress = pB / F0;
+                } else {
+                    let t = (xB - 20) / 5; // Đi từ 0 đến 1
+                    stress = sigma_b + (sigma_ph - sigma_b) * Math.pow(t, 2);
+                }
+
+                if (xB <= 0.46) ctx.strokeStyle = '#2563eb';      
+                else if (xB <= 4.5) ctx.strokeStyle = '#d97706';    
+                else if (xB <= 20) ctx.strokeStyle = '#16a34a';   
+                else ctx.strokeStyle = '#dc2626';                 
+
+                ctx.lineTo(mapX(strain), mapY(stress)); ctx.stroke();
+                if (i < points.length - 1) { ctx.beginPath(); ctx.moveTo(mapX(strain), mapY(stress)); }
+            }
+            
+            let currStrain = (state.xBase * state.scaleL / state.L0) * 100;
+            let currStress;
+            if (state.xBase <= 20) {
+                currStress = (getPBase(state.xBase) * state.scaleF) / F0;
+            } else {
+                let t = (state.xBase - 20) / 5;
+                currStress = sigma_b + (sigma_ph - sigma_b) * Math.pow(t, 2);
+            }
+
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath(); ctx.arc(mapX(currStrain), mapY(currStress), 4, 0, Math.PI*2); ctx.fill();
+
+            ctx.fillStyle = '#16a34a';
+            ctx.font = 'bold 11px Arial';
+            ctx.fillText('σ_b', mapX((20 * state.scaleL / state.L0) * 100), mapY(sigma_b) + 15);
+            
+            ctx.fillStyle = '#dc2626';
+            ctx.fillText('σ_ph', mapX(currStrain) - 10, mapY(currStress) - 10);
+        }
     }
 
-    function readInputs() {
-        // Mặc định scale = 1 để vẽ hình khi chưa có số liệu, nhưng không ghi đè số liệu hiển thị
-        state.d = parseFloat(inputD.value) || 10;
-        state.L0 = parseFloat(inputL0.value) || 100;
+    function drawLeaderLine(ctx, textX, textY, edgeX, edgeY, color, isLeft = false) {
+        ctx.beginPath();
+        if (isLeft) { ctx.moveTo(textX + 5, textY - 4); ctx.lineTo(textX + 20, textY - 4); } 
+        else { ctx.moveTo(textX, textY - 4); ctx.lineTo(textX - 15, textY - 4); }
+        ctx.lineTo(edgeX, edgeY);
+        ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.beginPath(); ctx.arc(edgeX, edgeY, 2.5, 0, Math.PI*2); ctx.fillStyle = color; ctx.fill();
+    }
+    
+    function drawArrow(ctx, fromx, fromy, tox, toy, color) {
+        var headlen = 10; var dx = tox - fromx; var dy = toy - fromy;
+        var angle = Math.atan2(dy, dx);
+        ctx.beginPath(); ctx.lineWidth = 2.5; ctx.strokeStyle = color;
+        ctx.moveTo(fromx, fromy); ctx.lineTo(tox, toy);
+        ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.moveTo(tox, toy);
+        ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.stroke();
+    }
 
+    function mainLoop() {
+        requestAnimationFrame(mainLoop);
+        
+        if (Math.abs(state.targetOffsetX - state.specimenOffsetX) > 0.1) {
+            state.specimenOffsetX += (state.targetOffsetX - state.specimenOffsetX) * 0.05;
+            update3DSpecimen();
+        } else if (state.specimenOffsetX !== state.targetOffsetX) {
+            state.specimenOffsetX = state.targetOffsetX;
+            update3DSpecimen();
+        }
+
+        if (state.isRunning) {
+            let dx_per_frame;
+            if (state.xBase <= 0.46) dx_per_frame = (state.forceSpeed / 1000) * 0.000766; 
+            else dx_per_frame = (state.forceSpeed / 150000); 
+
+            state.xBase += dx_per_frame;
+
+            if (state.xBase >= CONSTANTS.MAX_X_BASE) {
+                state.xBase = CONSTANTS.MAX_X_BASE;
+                state.isRunning = false;
+                state.isFinished = true;
+                if(btnStart) btnStart.disabled = true;
+                if(btnPause) btnPause.disabled = true;
+                
+                if(btnUnclamp) {
+                    btnUnclamp.disabled = false;
+                    btnUnclamp.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+            
+            const currentP = getPBase(state.xBase) * state.scaleF;
+            if (currentP > 40000 && state.yAxisMax === 40000) state.yAxisMax = 50000;
+            
+            update3DSpecimen();
+            drawGraphCanvas();
+        }
+
+        if (controls) controls.update();
+        if (renderer && scene && camera) renderer.render(scene, camera);
+        
+        drawOverlay2D();
+    }
+
+    function resizeCanvases() {
+        const dpr = Math.max(window.devicePixelRatio || 1, 2);
+
+        if (camera && renderer && leftPanel) {
+            const w = leftPanel.clientWidth;
+            const h = leftPanel.clientHeight;
+            if (w > 0 && h > 0) {
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h, false);
+                renderer.setPixelRatio(dpr);
+            }
+        }
+        
+        const scaleCanvas = (canvas, ctx, parentNode) => {
+            if (!canvas || !parentNode) return;
+            const w = parentNode.clientWidth;
+            const h = parentNode.clientHeight;
+            // Tránh crash khi thẻ cha đang ẩn hoặc chưa load
+            if (w === 0 || h === 0) return;
+            
+            canvas.width = Math.floor(w * dpr);
+            canvas.height = Math.floor(h * dpr);
+            if (ctx) {
+                ctx.setTransform(1, 0, 0, 1, 0, 0); 
+                ctx.scale(dpr, dpr); 
+            }
+        };
+
+        if (canvasSpecimen && leftPanel) {
+            scaleCanvas(canvasSpecimen, ctxS, leftPanel);
+        }
+        
+        if (canvasGraph && canvasGraph.parentElement) {
+            scaleCanvas(canvasGraph, ctxG, canvasGraph.parentElement);
+        }
+        
+        const canvasSS = getEl('canvasStressStrain');
+        if (canvasSS && canvasSS.parentElement) {
+            const ctxSS = canvasSS.getContext('2d');
+            scaleCanvas(canvasSS, ctxSS, canvasSS.parentElement);
+            if(state.isStressStrainUnlocked) drawStressStrainGraph();
+        }
+        
+        if(scene) update3DSpecimen();
+        drawGraphCanvas();
+    }
+    window.addEventListener('resize', resizeCanvases);
+
+    function updateScales() {
         state.scaleF = Math.pow(state.d / 10, 2);
         state.scaleL = state.L0 / 100;
     }
 
+    function checkDataInput(id, trueVal, tol) {
+        let el = getEl(id);
+        if (!el || el.disabled || el.value === "") {
+            if (el) el.classList.remove('correct', 'incorrect');
+            return false;
+        }
+        let val = parseFloat(el.value);
+        if (Math.abs(val - trueVal) <= tol) {
+            el.classList.remove('incorrect');
+            el.classList.add('correct');
+            return true;
+        } else {
+            el.classList.remove('correct');
+            el.classList.add('incorrect');
+            return false;
+        }
+    }
+
+    function validateInitialData() {
+        if (!state.isMeasuredBefore) return;
+        
+        let c1 = checkDataInput('inp_rep_d0', state.d, 0.05);
+        let c2 = checkDataInput('inp_rep_l0', state.L0, 0.05);
+
+        let bc = getEl('btnClamp');
+        if (c1 && c2 && !state.isClamped && !state.isRunning && state.xBase === 0) {
+            if(bc) {
+                bc.disabled = false;
+                bc.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        } else if (!state.isClamped) {
+            if(bc) {
+                bc.disabled = true;
+                bc.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    }
+
+    function validateFinalData() {
+        if (!state.isMeasuredAfter) return;
+
+        let d1_val = state.d * 0.911;
+        let dph_val = state.d * 0.62;
+        let dl_val = state.xBase * state.scaleL;
+        let l1_val = state.L0 + dl_val;
+
+        let p_tl = 25000 * state.scaleF;
+        let p_ch = 25600 * state.scaleF;
+        let p_b = 38000 * state.scaleF;
+        let p_ph = 26200 * state.scaleF;
+
+        let cd1 = checkDataInput('inp_rep_d1', d1_val, 0.05);
+        let cl1 = checkDataInput('inp_rep_l1', l1_val, 0.05);
+        let cdph = checkDataInput('inp_rep_dph', dph_val, 0.05);
+        let cdl = checkDataInput('inp_rep_dl', dl_val, 0.05);
+        
+        let ctl = checkDataInput('inp_rep_ptl', p_tl, 2);
+        let cch = checkDataInput('inp_rep_pch', p_ch, 2);
+        let cb = checkDataInput('inp_rep_pb', p_b, 2);
+        let cph = checkDataInput('inp_rep_pph', p_ph, 2);
+
+        let overlay = getEl('calc-lock-overlay');
+        if (cd1 && cl1 && cdph && cdl && ctl && cch && cb && cph) {
+            state.isCalcUnlocked = true;
+            if (overlay) overlay.classList.add('opacity-0', 'pointer-events-none');
+            
+            ['inp_sigma_tl', 'inp_sigma_ch', 'inp_sigma_b', 'inp_sigma_ph', 'inp_delta', 'inp_psi'].forEach(id => {
+                let el = getEl(id);
+                if(el) el.disabled = false;
+            });
+
+            let d0 = parseFloat(getEl('inp_rep_d0').value);
+            let L0 = parseFloat(getEl('inp_rep_l0').value);
+            let d_ph = parseFloat(getEl('inp_rep_dph').value);
+            let L1 = parseFloat(getEl('inp_rep_l1').value);
+
+            let P_tl = parseFloat(getEl('inp_rep_ptl').value);
+            let P_ch = parseFloat(getEl('inp_rep_pch').value);
+            let P_b = parseFloat(getEl('inp_rep_pb').value);
+            let P_ph = parseFloat(getEl('inp_rep_pph').value);
+
+            let F0 = (Math.PI * Math.pow(d0, 2) / 4).toFixed(2);
+            let F_ph = (Math.PI * Math.pow(d_ph, 2) / 4).toFixed(2);
+
+            let hint_f0 = getEl('hint_f0');
+            if(hint_f0) { hint_f0.innerHTML = `= ${F0} mm²`; hint_f0.classList.remove('hidden'); }
+            let hint_fph = getEl('hint_fph');
+            if(hint_fph) { hint_fph.innerHTML = `= ${F_ph} mm²`; hint_fph.classList.remove('hidden'); }
+
+            if(getEl('sub_ptl')) getEl('sub_ptl').innerText = P_tl;
+            if(getEl('sub_f0_1')) getEl('sub_f0_1').innerText = F0;
+
+            if(getEl('sub_pch')) getEl('sub_pch').innerText = P_ch;
+            if(getEl('sub_f0_2')) getEl('sub_f0_2').innerText = F0;
+
+            if(getEl('sub_pb')) getEl('sub_pb').innerText = P_b;
+            if(getEl('sub_f0_3')) getEl('sub_f0_3').innerText = F0;
+
+            if(getEl('sub_pph')) getEl('sub_pph').innerText = P_ph;
+            if(getEl('sub_fph_1')) getEl('sub_fph_1').innerText = F_ph;
+
+            if(getEl('sub_l1')) getEl('sub_l1').innerText = L1.toFixed(1);
+            if(getEl('sub_l0_1')) getEl('sub_l0_1').innerText = L0;
+            if(getEl('sub_l0_2')) getEl('sub_l0_2').innerText = L0;
+
+            if(getEl('sub_f0_4')) getEl('sub_f0_4').innerText = F0;
+            if(getEl('sub_fph_2')) getEl('sub_fph_2').innerText = F_ph;
+            if(getEl('sub_f0_5')) getEl('sub_f0_5').innerText = F0;
+
+            document.querySelectorAll('.calc-sub').forEach(el => el.classList.remove('hidden'));
+
+        } else {
+            state.isCalcUnlocked = false;
+            if(overlay) overlay.classList.remove('opacity-0', 'pointer-events-none');
+            ['inp_sigma_tl', 'inp_sigma_ch', 'inp_sigma_b', 'inp_sigma_ph', 'inp_delta', 'inp_psi'].forEach(id => {
+                let el = getEl(id);
+                if(el) el.disabled = true;
+            });
+            document.querySelectorAll('.calc-sub').forEach(el => el.classList.add('hidden'));
+            if(getEl('hint_f0')) getEl('hint_f0').classList.add('hidden');
+            if(getEl('hint_fph')) getEl('hint_fph').classList.add('hidden');
+
+            if(btnAIAssessQuad) {
+                btnAIAssessQuad.disabled = true;
+            }
+        }
+    }
+
+    function checkFormulaInput(id, trueVal, tol, percentTol = 0.05) {
+        let el = getEl(id);
+        if (!el || el.disabled || el.value === "") {
+            if (el) el.classList.remove('correct', 'incorrect');
+            return false;
+        }
+
+        let val = parseFloat(el.value);
+        if ((id === 'inp_delta' || id === 'inp_psi') && val < 2.0 && trueVal > 5.0) {
+            val = val * 100;
+        }
+
+        let err = Math.abs(val - trueVal);
+        let isCorrect = err <= tol || (Math.abs(err / trueVal) < percentTol); 
+
+        if (isCorrect) {
+            el.classList.remove('incorrect');
+            el.classList.add('correct');
+            return true;
+        } else {
+            el.classList.remove('correct');
+            el.classList.add('incorrect');
+            return false;
+        }
+    }
+
+    function validateFormulas() {
+        if (!state.isCalcUnlocked) return;
+
+        let el_d0 = getEl('inp_rep_d0');
+        let el_l0 = getEl('inp_rep_l0');
+        let el_dph = getEl('inp_rep_dph');
+        let el_l1 = getEl('inp_rep_l1');
+        let el_ptl = getEl('inp_rep_ptl');
+        let el_pch = getEl('inp_rep_pch');
+        let el_pb = getEl('inp_rep_pb');
+        let el_pph = getEl('inp_rep_pph');
+        
+        if (!el_d0 || !el_l0 || !el_dph || !el_l1 || !el_ptl || !el_pch || !el_pb || !el_pph) return;
+
+        let d0 = parseFloat(el_d0.value);
+        let L0 = parseFloat(el_l0.value);
+        let d_ph = parseFloat(el_dph.value);
+        let L1 = parseFloat(el_l1.value);
+
+        let P_tl = parseFloat(el_ptl.value);
+        let P_ch = parseFloat(el_pch.value);
+        let P_b = parseFloat(el_pb.value);
+        let P_ph = parseFloat(el_pph.value);
+
+        let F0 = parseFloat((Math.PI * Math.pow(d0, 2) / 4).toFixed(2));
+        let F_ph = parseFloat((Math.PI * Math.pow(d_ph, 2) / 4).toFixed(2)); 
+
+        let true_sigma_tl = P_tl / F0;
+        let true_sigma_ch = P_ch / F0;
+        let true_sigma_b = P_b / F0;
+        let true_sigma_ph = P_ph / F_ph;
+        
+        let true_delta = ((L1 - L0) / L0) * 100;
+        let true_psi = ((F0 - F_ph) / F0) * 100;
+
+        let c1 = checkFormulaInput('inp_sigma_tl', true_sigma_tl, 5, 0.05);
+        let c2 = checkFormulaInput('inp_sigma_ch', true_sigma_ch, 5, 0.05);
+        let c3 = checkFormulaInput('inp_sigma_b', true_sigma_b, 5, 0.05);
+        let c4 = checkFormulaInput('inp_sigma_ph', true_sigma_ph, 5, 0.05);
+        let c5 = checkFormulaInput('inp_delta', true_delta, 1.5, 0.05);
+        let c6 = checkFormulaInput('inp_psi', true_psi, 1.5, 0.05);
+
+        if (c1 && c2 && c3 && c4 && c5 && c6) {
+            state.isStressStrainUnlocked = true;
+            if (btnAIAssessQuad) {
+                btnAIAssessQuad.disabled = false;
+                btnAIAssessQuad.classList.add('animate-bounce');
+                setTimeout(() => btnAIAssessQuad.classList.remove('animate-bounce'), 3000);
+            }
+        } else {
+            state.isStressStrainUnlocked = false;
+            if (btnAIAssessQuad) btnAIAssessQuad.disabled = true;
+        }
+        drawStressStrainGraph(); 
+    }
+
+    ['inp_rep_d0', 'inp_rep_l0'].forEach(id => {
+        let el = getEl(id);
+        if(el) el.addEventListener('input', validateInitialData);
+    });
+
+    ['inp_rep_d1', 'inp_rep_l1', 'inp_rep_dph', 'inp_rep_dl', 'inp_rep_ptl', 'inp_rep_pch', 'inp_rep_pb', 'inp_rep_pph'].forEach(id => {
+        let el = getEl(id);
+        if(el) el.addEventListener('input', validateFinalData);
+    });
+
+    ['inp_sigma_tl', 'inp_sigma_ch', 'inp_sigma_b', 'inp_sigma_ph', 'inp_delta', 'inp_psi'].forEach(id => {
+        let el = getEl(id);
+        if(el) el.addEventListener('input', validateFormulas);
+    });
+
     function resetTest() {
         state.isRunning = false;
         state.isFinished = false;
-        cancelAnimationFrame(animationFrameId);
         state.xBase = 0;
         state.yAxisMax = 40000;
         state.breakRatio = Math.random() * (0.666 - 0.333) + 0.333; 
         
-        // Reset hệ thống đo đạc
         state.isMeasuredBefore = false;
+        state.isClamped = false;
+        state.isUnclamped = false;
         state.isMeasuredAfter = false;
-        inputD.value = "";
-        inputL0.value = "";
+        state.specimenOffsetX = -70; 
+        state.targetOffsetX = -70;
+        state.isStressStrainUnlocked = false; 
+        state.isCalcUnlocked = false;
         
-        // Cài đặt lại trạng thái Nút bấm
-        btnStart.disabled = true; // Khóa tới khi đo xong
-        btnPause.disabled = true;
+        state.d = 10;
+        state.L0 = 100;
+
+        if (btnMeasure) {
+            btnMeasure.disabled = false;
+            btnMeasure.innerText = "1. ĐO KÍCH THƯỚC";
+            btnMeasure.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-purple-600', 'hover:bg-purple-700');
+            btnMeasure.classList.add('bg-teal-600', 'hover:bg-teal-700');
+        }
         
-        btnMeasureBefore.disabled = false;
-        btnMeasureBefore.classList.remove('opacity-50', 'cursor-not-allowed');
+        if (btnClamp) {
+            btnClamp.disabled = true;
+            btnClamp.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        if (btnStart) {
+            btnStart.disabled = true;
+        }
         
-        btnMeasureAfter.disabled = true;
-        btnMeasureAfter.classList.add('opacity-50', 'cursor-not-allowed');
+        if (btnUnclamp) {
+            btnUnclamp.disabled = true;
+            btnUnclamp.classList.add('opacity-50', 'cursor-not-allowed');
+        }
         
-        readInputs();
-        drawAll();
+        if (btnAIAssessQuad) btnAIAssessQuad.disabled = true;
+        
+        ['inp_rep_d0', 'inp_rep_l0', 'inp_rep_d1', 'inp_rep_l1', 'inp_rep_dph', 'inp_rep_dl', 'inp_rep_ptl', 'inp_rep_pch', 'inp_rep_pb', 'inp_rep_pph'].forEach(id => {
+            let el = getEl(id);
+            if(el) { el.value = ""; el.classList.remove('correct', 'incorrect'); el.disabled = true; el.placeholder = "-"; }
+        });
+
+        ['inp_sigma_tl', 'inp_sigma_ch', 'inp_sigma_b', 'inp_sigma_ph', 'inp_delta', 'inp_psi'].forEach(id => {
+            let el = getEl(id);
+            if(el) { el.value = ""; el.classList.remove('correct', 'incorrect'); el.disabled = true; }
+        });
+        
+        let overlay = getEl('calc-lock-overlay');
+        if (overlay) overlay.classList.remove('opacity-0', 'pointer-events-none');
+
+        document.querySelectorAll('.calc-sub').forEach(el => el.classList.add('hidden'));
+        if(getEl('hint_f0')) getEl('hint_f0').classList.add('hidden');
+        if(getEl('hint_fph')) getEl('hint_fph').classList.add('hidden');
+
+        if (controls) {
+            controls.target.set(0, 0, 0);
+            camera.position.set(0, 0, 310); 
+            controls.update();
+        }
+
+        updateScales();
+        if (scene) update3DSpecimen();
+        drawGraphCanvas();
+        drawStressStrainGraph();
     }
 
-    // --- SỰ KIỆN NÚT ĐO KÍCH THƯỚC LẦN 1 ---
-    btnMeasureBefore.addEventListener('click', () => {
-        // Sinh giá trị ngẫu nhiên cho đường kính d0 (từ 9mm đến 11mm)
-        const randD = (Math.random() * (11 - 9) + 9).toFixed(2);
-        
-        // Theo tiêu chuẩn mẫu tỷ lệ dài: L0 = 10 * d0
-        const randL0 = (parseFloat(randD) * 10).toFixed(1);
-        
-        inputD.value = randD;
-        inputL0.value = randL0;
-        
-        state.isMeasuredBefore = true;
-        
-        // Khóa nút đo đạc, mở khóa Bắt Đầu
-        btnMeasureBefore.disabled = true;
-        btnMeasureBefore.classList.add('opacity-50', 'cursor-not-allowed');
-        btnStart.disabled = false;
-        
-        readInputs();
-        drawAll();
-    });
+    if (btnMeasure) {
+        btnMeasure.addEventListener('click', () => {
+            if (!state.isMeasuredBefore) {
+                const randD = (Math.random() * (11 - 9) + 9).toFixed(2);
+                const randL0 = (parseFloat(randD) * 10).toFixed(1);
+                
+                state.d = parseFloat(randD);
+                state.L0 = parseFloat(randL0);
+                
+                state.isMeasuredBefore = true;
+                
+                btnMeasure.disabled = true;
+                btnMeasure.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                let el_d0 = getEl('inp_rep_d0');
+                if (el_d0) { el_d0.disabled = false; el_d0.placeholder = "?"; }
+                let el_l0 = getEl('inp_rep_l0');
+                if (el_l0) { el_l0.disabled = false; el_l0.placeholder = "?"; }
+                
+                updateScales();
+                update3DSpecimen();
+                drawStressStrainGraph(); 
 
-    // --- SỰ KIỆN NÚT ĐO KÍCH THƯỚC LẦN 2 ---
-    btnMeasureAfter.addEventListener('click', () => {
-        state.isMeasuredAfter = true;
-        btnMeasureAfter.disabled = true;
-        btnMeasureAfter.classList.add('opacity-50', 'cursor-not-allowed');
-        drawAll();
-    });
+                alert("Đã đo được kích thước mẫu.\nBây giờ hãy di chuyển chuột vào Thước 3D, đọc kết quả d0 và L0 rồi nhập vào 'Bảng Số Liệu Thu Được' ở Trang Báo Cáo để tiếp tục Kẹp Mẫu!");
+                
+            } else if (state.isUnclamped && !state.isMeasuredAfter) {
+                state.isMeasuredAfter = true;
+                btnMeasure.disabled = true;
+                btnMeasure.classList.add('opacity-50', 'cursor-not-allowed');
+                drawOverlay2D();
+                
+                ['inp_rep_d1', 'inp_rep_l1', 'inp_rep_dph', 'inp_rep_dl', 'inp_rep_ptl', 'inp_rep_pch', 'inp_rep_pb', 'inp_rep_pph'].forEach(id => {
+                    let el = getEl(id);
+                    if(el) { el.disabled = false; el.placeholder = "?"; }
+                });
+                
+                alert("Đã đo đạc xong!\nHãy đọc kỹ các kích thước trên thước đo 3D và các Lực trên Biểu Đồ, sau đó nhập đầy đủ vào 'Bảng Số Liệu Thu Được' để Mở khóa tính toán Đặc trưng Cơ học.");
+            }
+        });
+    }
 
-    btnStart.addEventListener('click', () => {
-        if (state.isFinished) return;
-        state.isRunning = true;
-        state.forceSpeed = parseFloat(speedSlider.value);
-        btnStart.disabled = true;
-        btnPause.disabled = false;
-        animate();
-    });
+    if (btnClamp) {
+        btnClamp.addEventListener('click', () => {
+            state.isClamped = true;
+            state.targetOffsetX = 0; 
+            
+            btnClamp.disabled = true;
+            btnClamp.classList.add('opacity-50', 'cursor-not-allowed');
+            if (btnStart) btnStart.disabled = false;
+        });
+    }
 
-    btnPause.addEventListener('click', () => {
-        state.isRunning = false;
-        cancelAnimationFrame(animationFrameId);
-        btnStart.disabled = false;
-        btnPause.disabled = true;
-    });
+    if (btnUnclamp) {
+        btnUnclamp.addEventListener('click', () => {
+            state.isUnclamped = true;
+            state.targetOffsetX = -70; 
+            
+            btnUnclamp.disabled = true;
+            btnUnclamp.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            if (btnMeasure) {
+                btnMeasure.disabled = false;
+                btnMeasure.innerText = "4. ĐO LẠI KÍCH THƯỚC";
+                btnMeasure.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-teal-600', 'hover:bg-teal-700');
+                btnMeasure.classList.add('bg-purple-600', 'hover:bg-purple-700');
+            }
+        });
+    }
 
-    btnReset.addEventListener('click', resetTest);
+    if (btnStart) {
+        btnStart.addEventListener('click', () => {
+            if (state.isFinished) return;
+            state.isRunning = true;
+            state.forceSpeed = speedSlider ? parseFloat(speedSlider.value) : 500;
+            if (valSpeed) valSpeed.textContent = state.forceSpeed;
+            btnStart.disabled = true;
+            if (btnPause) btnPause.disabled = false;
+        });
+    }
 
-    speedSlider.addEventListener('input', (e) => {
-        state.forceSpeed = parseFloat(e.target.value);
-        valSpeed.textContent = state.forceSpeed;
-    });
+    if (btnPause) {
+        btnPause.addEventListener('click', () => {
+            state.isRunning = false;
+            if (btnStart) btnStart.disabled = false;
+            btnPause.disabled = true;
+        });
+    }
 
+    if (btnReset) btnReset.addEventListener('click', resetTest);
+
+    if (btnFrontView) {
+        btnFrontView.addEventListener('click', () => {
+            if (controls && camera) {
+                camera.position.set(0, 0, 310); 
+                controls.target.set(0, 0, 0);   
+                controls.update();              
+            }
+        });
+    }
+
+    if (speedSlider) {
+        speedSlider.addEventListener('input', (e) => {
+            state.forceSpeed = parseFloat(e.target.value);
+            if (valSpeed) valSpeed.textContent = state.forceSpeed;
+        });
+    }
+
+    const guideModal = getEl('guide-modal');
+    const guideContent = getEl('guide-content');
+    const btnShowGuide = getEl('btn-show-guide');
+    const btnCloseGuide = getEl('btn-close-guide');
+    const guideFooter = getEl('guide-footer');
+    const agreeCheck = getEl('agree-check');
+    const agreeLabel = getEl('agree-label');
+    const agreeTimer = getEl('agree-timer');
+    const btnStartSim = getEl('btn-start-sim');
+
+    let isFirstTimeGuide = true;
+    let guideTimerInterval = null;
+
+    function openGuide() {
+        if(guideModal) {
+            guideModal.classList.remove('pointer-events-none', 'opacity-0');
+            guideModal.classList.add('opacity-100');
+        }
+        if(guideContent) {
+            guideContent.classList.remove('scale-95');
+            guideContent.classList.add('scale-100');
+        }
+
+        if (isFirstTimeGuide) {
+            if (btnCloseGuide) btnCloseGuide.classList.add('hidden');
+            if (guideFooter) guideFooter.classList.remove('hidden');
+            
+            let timeLeft = 15; 
+            if (agreeTimer) agreeTimer.innerText = `(Chờ ${timeLeft}s)`;
+            
+            if(guideTimerInterval) clearInterval(guideTimerInterval);
+            guideTimerInterval = setInterval(() => {
+                timeLeft--;
+                if(timeLeft > 0) {
+                    if (agreeTimer) agreeTimer.innerText = `(Chờ ${timeLeft}s)`;
+                } else {
+                    clearInterval(guideTimerInterval);
+                    if (agreeTimer) agreeTimer.innerText = "";
+                    if (agreeCheck) {
+                        agreeCheck.disabled = false;
+                        agreeCheck.classList.remove('cursor-not-allowed');
+                    }
+                    if (agreeLabel) {
+                        agreeLabel.classList.remove('cursor-not-allowed', 'opacity-50');
+                    }
+                }
+            }, 1000);
+        } else {
+            if (btnCloseGuide) btnCloseGuide.classList.remove('hidden');
+            if (guideFooter) guideFooter.classList.add('hidden');
+        }
+    }
+
+    function closeGuide() {
+        if(guideModal) {
+            guideModal.classList.remove('opacity-100');
+            guideModal.classList.add('pointer-events-none', 'opacity-0');
+        }
+        if(guideContent) {
+            guideContent.classList.remove('scale-100');
+            guideContent.classList.add('scale-95');
+        }
+    }
+
+    if (agreeCheck && btnStartSim) {
+        agreeCheck.addEventListener('change', (e) => {
+            if(e.target.checked) {
+                btnStartSim.disabled = false;
+                btnStartSim.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+            } else {
+                btnStartSim.disabled = true;
+                btnStartSim.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+            }
+        });
+
+        btnStartSim.addEventListener('click', () => {
+            isFirstTimeGuide = false;
+            closeGuide();
+        });
+    }
+
+    if (btnShowGuide) btnShowGuide.addEventListener('click', openGuide);
+    if (btnCloseGuide) btnCloseGuide.addEventListener('click', closeGuide);
+    
+    if (guideModal) {
+        guideModal.addEventListener('click', (e) => {
+            if (e.target === guideModal && !isFirstTimeGuide) closeGuide();
+        });
+    }
+    
+    if (closeAiModal) {
+        closeAiModal.addEventListener('click', () => {
+            if (aiModal) aiModal.classList.add('hidden');
+        });
+    }
+
+    async function fetchWithRetry(url, options, retries = 5) {
+        const delays = [1000, 2000, 4000, 8000, 16000];
+        for (let i = 0; i < retries; i++) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(`Lỗi HTTP ${response.status}: ${errData.error?.message || response.statusText}`);
+                }
+                return await response.json();
+            } catch (err) {
+                if (i === retries - 1) throw err;
+                await new Promise(resolve => setTimeout(resolve, delays[i]));
+            }
+        }
+    }
+
+    async function runAIAssessment() {
+        if (!aiModal || !aiContent) return;
+        aiModal.classList.remove('hidden');
+        aiContent.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-10">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mb-4"></div>
+                <p class="text-indigo-600 font-semibold animate-pulse">AI đang phân tích số liệu... Vui lòng chờ ✨</p>
+            </div>
+        `;
+
+        const apiKey = ""; 
+        const userQuery = `Kết quả mô phỏng thí nghiệm kéo thép mềm CT3:
+    - Kích thước ban đầu: d0 = ${state.d.toFixed(2)} mm, L0 = ${state.L0.toFixed(2)} mm
+    - Kích thước sau đứt: d_ph (tại điểm thắt) = ${(state.d * 0.62).toFixed(2)} mm, d1 (phần song song) = ${(state.d * 0.911).toFixed(2)} mm
+    - Lực tỉ lệ (P_tl) = ${(25000 * state.scaleF).toFixed(0)} N
+    - Lực chảy (P_ch) = ${(25600 * state.scaleF).toFixed(0)} N
+    - Lực bền cực đại (P_b) = ${(38000 * state.scaleF).toFixed(0)} N
+    - Lực phá hủy (P_ph) = ${(26200 * state.scaleF).toFixed(0)} N`;
+
+        try {
+            const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: userQuery }] }]
+                })
+            });
+
+            let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không thể phân tích dữ liệu lúc này.";
+            text = text.replace(/```html/gi, '').replace(/```/g, '');
+            aiContent.innerHTML = `<div class="prose prose-sm max-w-none prose-indigo">${text}</div>`;
+        } catch (error) {
+            aiContent.innerHTML = `<div class="text-red-500 bg-red-50 p-4 rounded border border-red-200">
+                <strong>Đã xảy ra lỗi khi kết nối với AI.</strong><br> Chi tiết: ${error.message}
+            </div>`;
+        }
+    }
+
+    if (btnAIAssessQuad) btnAIAssessQuad.addEventListener('click', runAIAssessment);
+
+    // Boot phần mềm sau khi giao diện đã sẵn sàng
     setTimeout(() => {
+        init3D();
         resizeCanvases();
         resetTest();
+        mainLoop(); 
+        openGuide(); 
     }, 100);
 
+});
 </script>
 </body>
 </html>
