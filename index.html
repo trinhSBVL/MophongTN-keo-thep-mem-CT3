@@ -133,11 +133,33 @@
 
         @media print {
             body { background: white !important; overflow: visible !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .page { height: 100vh !important; padding: 0 !important; display: flex !important; position: relative !important; page-break-after: always !important; }
+            .page { height: 100vh !important; padding: 0 !important; display: block !important; position: relative !important; page-break-after: always !important; }
+            #page-1 { height: 100vh !important; page-break-after: always !important; display: block !important; }
             #page-2 { height: auto !important; padding-top: 0 !important; display: block !important; page-break-after: auto !important; }
             .scroll-down-btn, .print-hide { display: none !important; } 
-            .app-container { height: 95vh !important; max-height: none !important; box-shadow: none !important; border: 1px solid #cbd5e1 !important; page-break-inside: avoid; }
-            .main-content { height: 600px !important; }
+            
+            .app-container { height: 100vh !important; max-height: none !important; box-shadow: none !important; border: none !important; page-break-inside: avoid; border-radius: 0 !important;}
+            
+            /* CẤU TRÚC LẠI BỐ CỤC TRANG 1 KHI IN DỌC (3D NỬA TRÊN, BIỂU ĐỒ NỬA DƯỚI) */
+            .main-content { 
+                display: flex !important; 
+                flex-direction: column !important; 
+                height: calc(100vh - 60px) !important;
+            }
+            .left-panel { 
+                width: 100% !important; 
+                height: 50% !important; 
+                border-right: none !important;
+                border-bottom: 2px solid #334155 !important;
+                position: relative !important;
+            }
+            .right-panel { 
+                width: 100% !important; 
+                height: 50% !important; 
+                position: relative !important;
+            }
+            .graph-container { height: 100% !important; width: 100% !important; position: relative !important;}
+            
             .page-2-grid { display: block !important; margin-top: 0 !important; max-height: none !important; height: auto !important; gap: 10px !important;}
             .quadrant { background: white !important; border: 1px solid #cbd5e1 !important; box-shadow: none !important; margin-bottom: 15px !important; color: black !important; page-break-inside: avoid; padding: 10px !important; }
             .quadrant h2 { color: black !important; border-bottom-color: #cbd5e1 !important; }
@@ -147,6 +169,12 @@
             .border-slate-600, .border-slate-700 { border-color: #cbd5e1 !important; }
             .calc-input, .data-input { background: transparent !important; border: none !important; border-bottom: 1px dotted black !important; color: black !important; box-shadow: none !important; }
             .frac-top { border-bottom-color: black !important; }
+            
+            /* KHẮC PHỤC LỖI MẤT BIỂU ĐỒ ỨNG SUẤT KHI IN */
+            #quad-3 { min-height: 400px !important; display: block !important; }
+            #quad-3 .relative { height: 350px !important; background-color: #0f172a !important; border: 2px solid #64748b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            #quad-4 { min-height: max-content !important; height: auto !important; }
+            #quad-4 .flex-grow { overflow: visible !important; height: auto !important; }
         }
     </style>
 </head>
@@ -180,13 +208,13 @@
                 <path d="M 77 133 C 125 120, 125 85, 95 80 C 65 75, 60 45, 92 38" fill="none" stroke="#1A237E" stroke-width="3.5" stroke-dasharray="10,6" />
             </svg>
 
-            Mô phỏng thí nghiệm kéo thép mềm CT3
-
+            <span style="font-size: 16px;">Mô phỏng thí nghiệm kéo thép mềm CT3</span>
+        
             <!-- THÔNG TIN PHÒNG THÍ NGHIỆM -->
             <div style="position: absolute; top: 50%; right: 15px; transform: translateY(-50%); text-align: right; line-height: 1.1;">
-                <div class="text-white font-bold text-[0.7rem] uppercase tracking-wide">TRUNG TÂM KHCN GTVT</div>
-                <div class="text-white font-bold text-[0.7rem] uppercase tracking-wide">PTN Sức Bền Vật Liệu</div>
-                <div class="text-blue-200 font-semibold text-[0.6rem] mt-0.5">Phụ trách: Vũ Ngọc Trinh</div>
+                <div class="text-white font-bold text-[0.6rem] uppercase tracking-wide">TRUNG TÂM KHCN GTVT</div>
+                <div class="text-white font-bold text-[0.6rem] uppercase tracking-wide">PTN Sức Bền Vật Liệu</div>
+                <div class="text-blue-200 font-semibold text-[0.5rem] mt-0.5">Phụ trách: Vũ Ngọc Trinh</div>
             </div>
         </div>
 
@@ -659,7 +687,7 @@
 
                         <div class="bg-slate-900/50 p-3 rounded border border-slate-700">
                             <h4 class="text-white font-bold mb-1"><span class="bg-purple-600 text-white px-2 py-0.5 rounded mr-2 text-xs">BƯỚC 5</span>IN BÁO CÁO NỘP</h4>
-                            <p>Khi hoàn thiện tính toán 100%, Sinh viên hoàn thiện phần nhận xét biểu đồ, dạng phá hỏng để hoàn thiện báo cáo. Nhấn tổ phợp phím CTRL+P để in báo cáo chuẩn bị nộp (định dạng trang in A4, trang dọc).</p>
+                            <p>Khi hoàn thiện tính toán 100%, Sinh viên hoàn thiện phần nhận xét biểu đồ, dạng phá hỏng để hoàn thiện báo cáo. Nhấn tổ hợp phím <b>CTRL+P</b> để in báo cáo chuẩn bị nộp (định dạng trang in A4, trang dọc).</p>
 
                         </div>
                     </div>
@@ -1646,10 +1674,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if(state.isStressStrainUnlocked) drawStressStrainGraph();
         }
         
-        if(scene) update3DSpecimen();
+        if(scene) {
+            update3DSpecimen();
+            if (renderer && camera) renderer.render(scene, camera); // Ép vẽ lại lưới 3D ngay lập tức
+        }
+        drawOverlay2D(); // Vẽ lại kích thước 2D lên 3D
         drawGraphCanvas();
     }
     window.addEventListener('resize', resizeCanvases);
+    
+    // Tự động căn chỉnh và vẽ lại độ phân giải ngay trước khi máy in chụp layout
+    window.addEventListener('beforeprint', () => {
+        resizeCanvases();
+        // Cú chốt: Đảm bảo lệnh render WebGL chạy lần cuối trước khi đóng băng javascript để in
+        if(renderer && scene && camera) renderer.render(scene, camera); 
+    });
 
     function updateScales() {
         state.scaleF = Math.pow(state.d / 10, 2);
